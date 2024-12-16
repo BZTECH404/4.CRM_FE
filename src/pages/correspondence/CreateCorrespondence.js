@@ -5,7 +5,7 @@ import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fo
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import { baseurl, ProjectStatus } from "../../api";
+import { baseurl, ProjectStatus, companies, Type } from "../../api";
 import { useSelector, useDispatch } from 'react-redux';
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
@@ -32,6 +32,8 @@ export default () => {
   const [editIsActive, setEditIsActive] = useState(false);
   const [editItemId, setEditItemId] = useState(null);
   let [selectedFiles, setSelectedFiles] = useState([])
+  // Acknowledgement
+  let [selectedFilesack, setSelectedFilesack] = useState([])
 
   const [ptype, setPtype] = useState('');
   const [arr, setArr] = useState([]);
@@ -58,8 +60,11 @@ export default () => {
   const [taskdescription, setTaskdescription] = useState('')
   const [assignedby, setassignedby] = useState('')
   const [selectedusers, setSelectedusers] = useState([])
-  const [createdate, setCreateDate] = useState('')
+  const Today = new Date().toISOString().split("T")[0];
+  const [createdate, setCreateDate] = useState(Today)
   let [projectname, setprojectname] = useState("")
+  const [form, setForm] = useState("")
+  const [to, setTo] = useState("")
 
   const token = localStorage.getItem('token');
 
@@ -67,6 +72,8 @@ export default () => {
   // project filtering
   let [isActive, setIsActive] = useState(null);
   let [companyname, setCompanyName] = useState('')
+  const [forwarded, setForwarded] = useState("Yet to Forwarded")
+  const [type, setType] = useState("");
   let [isActives, setIsActives] = useState(null)
 
 
@@ -75,7 +82,24 @@ export default () => {
   let [next, setNext] = useState("")
   let [correspondence, setCorrespondence] = useState([])
   let [stop, setStop] = useState(true)
-  let [letterno,setletterno]=useState("")
+  let [letterno, setletterno] = useState("")
+  let [ack, setAck] = useState("Yet to Upload")
+  const [contacts, setContacts] = useState([]); // State to hold contact data
+
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await axios.put(`${baseurl}/contact/all`); // Adjust API endpoint if necessary
+        setContacts(response.data); // Set the fetched contact data in the state
+      } catch (error) {
+        console.error('Error fetching contact:', error);
+      }
+    };
+
+    fetchContacts();
+  }, []);
+
 
   const handleFileChange = async (event) => {
     const files = event.target.files;
@@ -99,43 +123,81 @@ export default () => {
         newarr.push([arr1[0], arr1[1], file])
       }
       setStop(true)
-      console.log(newarr)
+      //////console.log(newarr)
       setSelectedFiles([...selectedFiles, ...newarr]);
     }
   };
 
+  const handleFileChange2 = async (event) => {
+    const files = event.target.files;
+    const newSelectedFiles = [];
+    let newar = []
+    setStop(false)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (file) {
+        // Read file extension
+        const fileExtension = file.name;
+        setSelectedFile(file);
+        setFileExtension(fileExtension);
+
+        const arr1 = await triggerFunction(fileExtension, projectname);
+        // key=arr1[0]
+        // url=arr1[1]
+        // setKey(arr1[0])
+        // setUrl(arr1[1])
+        newar.push([arr1[0], arr1[1], file])
+      }
+      setStop(true)
+      //////console.log(newar)
+      setSelectedFilesack([...selectedFilesack, ...newar]);
+    }
+  };
+
   const handleUpload = (e) => {
-    e.preventDefault()
-    // //////////////////console.log("hi")
+    e.preventDefault();
+
     let body = {
       project: pname,
       subject: tasksubject,
       description: taskdescription,
-      letterno:letterno,
+      letterno: letterno,
+      from: form,
+      to: to,
       date: createdate,
-      file: selectedFiles,
-    }
-    console.log(body)
-    dispatch(addcorrespondence(body)).then(() => {
+      acknowledgement: ack,
+      forwarded: forwarded,
+      type: type,
+      file: selectedFiles.length !== 0 ? selectedFiles : [], // Set to empty array if no files
+      file1: selectedFilesack.length !== 0 ? selectedFilesack : [] // Set to empty array if no ack files
+    };
 
-    }).catch(error => {
-      console.log(error)
-    })
+    //////console.log(body);
 
+    dispatch(addcorrespondence(body))
+      .then(() => {
+        // Handle success
+      })
+      .catch((error) => {
+        //////console.log(error);
+      });
   };
+
+
 
 
   ////////////////////////////////////////////
 
   const handleprojectFetch = async () => {
-    //////////////////console.log(companyname)
+    ////////////////////console.log(companyname)
 
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // //////console.log(resp)
+      // ////////console.log(resp)
     }).catch(error => {
 
     })
@@ -145,24 +207,20 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-    //////////////////console.log(check())
+    ////////////////////console.log(check())
     dispatch(getcorrespondence()).then((resp) => {
       setCorrespondence(resp)
-      console.log(resp)
-      // //////console.log(resp)
+      //////console.log(resp)
+      // ////////console.log(resp)
     }).catch(error => {
-      console.log(error)
+      //////console.log(error)
     })
-
-
-
-
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // //////console.log(resp)
+      // ////////console.log(resp)
     }).catch(error => {
 
     })
@@ -179,47 +237,23 @@ export default () => {
   }, []);
 
 
-
-
-
-
-
-
-
   const handleImagesUpload = (event) => {
     const image = event.target.files[0];
     setImageUrl(image);
   }
 
-  const handleDelete = (id) => {
-    const token = localStorage.getItem('token');
 
-    axios.delete(`https://ab.execute-api.ap-south-1.amazonaws.com/production/api/services/${id}`, {
-      headers: {
-        Authorization: `${token}`
-      }
-    })
-      .then(response => {
-        //////////////////console.log('Record deleted successfully:', response.data);
-        setData(prevData => prevData.filter(item => item.id !== id));
-        toast.success('Record deleted successfully'); // Display success toast
-      })
-      .catch(error => {
-        //console.error('Error deleting record:', error);
-        toast.error('Failed to delete record'); // Display error toast
-      });
-  }
-  // Calculate the index of the first item to display based on the current page and items per page
+
 
 
 
   const findprojectname = (id) => {
-    ////////////////console.log(id,pnamearr)
+    //////////////////console.log(id,pnamearr)
     for (let i = 0; i < pnamearr.length; i++) {
       if (pnamearr[i]._id === id) {
         projectname = pnamearr[i].name
         setprojectname(pnamearr[i].name)
-        console.log(projectname)
+        //////console.log(projectname)
         break
       }
     }
@@ -245,34 +279,30 @@ export default () => {
     setEditMode(true); // Set editMode to true when opening the edit modal
   }
 
-  const handleEditSubmit = async () => {
-    const token = localStorage.getItem('token');
-    const editData = {
-      ProjectName: editProjectName,
-      serviceDescription: editServiceDescription,
-      isActive: editIsActive
-    };
-
-    try {
-      const response = await axios.put(`https://ab.execute-api.ap-south-1.amazonaws.com/production/api/services/${editItemId}`, editData, {
-        headers: {
-          Authorization: `${token}`
-        }
-      });
-      //////////////////console.log('Updated data:', response.data);
-      toast.success('Data updated successfully');
-      setShowModal(false);
-      setData(prevData => prevData.map(item => item._id === editItemId ? { ...item, ...editData } : item));
-    } catch (error) {
-      //console.error('Error updating record:', error);
-      toast.error('Failed to update record');
-    }
-  }
-
   // redirect to projects page
   const handleRedirect = (id) => {
     history.push(`/projects/${id}`)
   }
+
+  const handleCheckboxChange = (value) => {
+    if (ack === value) {
+      // If the current checkbox is unchecked, revert to "Yet to Upload"
+      setAck("Yet to Upload");
+    } else {
+      // Set the selected value ("Not Required" or "Uploaded")
+      setAck(value);
+    }
+  };
+
+
+
+  const handleCheckboxChange1 = () => {
+    if (forwarded === "Yet to Upload") {
+      setForwarded("Not Required");
+    } else {
+      setForwarded("Yet to Forwarded");
+    }
+  };
 
 
   let startIndex = currentPage * itemsPerPage;
@@ -305,17 +335,8 @@ export default () => {
             <section className="d-flex align-items-center my-2 mt-lg-3 mb-lg-5">
               <Container>
                 <form onSubmit={(e) => handleUpload(e)}>
-                  <Row >
-                    <Col xs={12} md={6}>
-                      <Form.Group id="pname" className="mb-4">
-                        <Form.Label>Creation Date</Form.Label>
-                        <InputGroup>
-                          <InputGroup.Text></InputGroup.Text>
-                          <Form.Control autoFocus required type="date" placeholder="Amount" value={createdate} onChange={(e) => setCreateDate(e.target.value)} />
-                        </InputGroup>
-                      </Form.Group>
-                    </Col>
-
+                  <Row>
+                    {/* Company Name */}
                     <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Company Name</Form.Label>
@@ -327,14 +348,14 @@ export default () => {
                             handleprojectFetch()
                           }}>
                             <option value="">Select Option</option>
-                            <option value="Neo">Neo Modern</option>
-                            <option value="BZ">BZ Consultants</option>
-                            <option value="PMC">PMC</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
                     </Col>
-
+                    {/* Project Status */}
                     <Col xs={12} md={6}>
                       <Form.Group id="taskstatus" className="mb-4">
                         <Form.Label>Project Status</Form.Label>
@@ -346,7 +367,6 @@ export default () => {
                             handleprojectFetch()
                           }}>
                             <option value="">Select Option</option>
-                            {/* Mapping through the arr array to generate options */}
                             {ProjectStatus.map((option, index) => (
                               <option key={index} value={option}>{option}</option>
                             ))}
@@ -354,127 +374,224 @@ export default () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
+                    {/* From */}
                     <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
-                        <Form.Label>Project name</Form.Label>
+                        <Form.Label>From</Form.Label>
                         <InputGroup>
-                          <InputGroup.Text>
-                          </InputGroup.Text>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select
+                            value={form}
+                            onChange={(e) => {
+                              setForm(e.target.value);
+                            }}
+                          >
+                            <option value="">Select Option</option>
+                            {contacts
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              // .filter((contact) => contact.type === 'Developer')
+                              .map((contact, index) => (
+                                <option key={index} value={contact.name}>
+                                  {contact.name}
+                                </option>
+                              ))}
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>To</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select
+                            value={to}
+                            onChange={(e) => {
+                              setTo(e.target.value);
+                            }}
+                          >
+                            <option value="">Select Option</option>
+                            {contacts
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              // .filter((contact) => contact.type === 'Agent')
+                              .map((contact, index) => (
+                                <option key={index} value={contact.name}>
+                                  {contact.name}
+                                </option>
+                              ))}
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                    {/* Date */}
+                    <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Date</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Control
+                            autoFocus
+                            required
+                            type="date"
+                            placeholder="Amount"
+                            value={createdate}
+                            onChange={(e) => setCreateDate(e.target.value)}
+                          />
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+
+                    {/* Project Name */}
+                    <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Project Name</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
                           <Form.Select value={pname} onChange={(e) => {
                             setPname(e.target.value)
                             findprojectname(e.target.value)
                           }}>
                             <option value="">Select Option</option>
-                            {/* Mapping through the arr array to generate options */}
-                            {pnamearr.map((option, index) => (
+                            {pnamearr && pnamearr.map((option, index) => (
                               <option key={index} value={option._id}>{option.name}</option>
                             ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                      {/* Letter No */}
+
+                    {/* Letter No */}
                     <Col xs={12} md={6}>
                       <Form.Group id="tasksubject" className="mb-4">
                         <Form.Label>Letter No</Form.Label>
                         <InputGroup>
-                          <InputGroup.Text>
-                          </InputGroup.Text>
+                          <InputGroup.Text></InputGroup.Text>
                           <Form.Control autoFocus type="text" placeholder="Task Subject" value={letterno} onChange={(e) => setletterno(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
 
+                    {/* Subject */}
                     <Col xs={12} md={6}>
                       <Form.Group id="tasksubject" className="mb-4">
                         <Form.Label>Subject</Form.Label>
                         <InputGroup>
-                          <InputGroup.Text>
-                          </InputGroup.Text>
+                          <InputGroup.Text></InputGroup.Text>
                           <Form.Control autoFocus type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                    
-                    <Col xs={12} md={6}>
-                      <Form.Group id="Taskdescription" className="mb-4">
-                        <Form.Label>Description</Form.Label>
-                        <InputGroup>
-                          <textarea autoFocus rows="4" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
-                        </InputGroup>
-                      </Form.Group>
-                    </Col>
-
-
-                    {projectname?(<>
+                    <Row>
+                      {/* Description */}
                       <Col xs={12} md={6}>
-                      <Form.Group id="Project Image" className="mb-4">
-                        <Form.Label>File if Required</Form.Label>
-                        <InputGroup>
-                          <InputGroup.Text>
-                          </InputGroup.Text>
-                          <Form.Control
-                            type="file"
-                            onChange={handleFileChange}
-                            placeholder="Upload Image"
-                          />
-                        </InputGroup>
-                      </Form.Group>
-                    </Col>
-                    
-                    </>):(null)}
+                        <Form.Group id="Taskdescription" className="mb-4">
+                          <Form.Label>Description</Form.Label>
+                          <InputGroup>
+                            <textarea autoFocus rows="2" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
+                          </InputGroup>
+                        </Form.Group>
+                      </Col>
+                      <Col xs={2} md={3}>
+                        <Form.Group id="forwarded" className="mb-4">
+                          <Form.Label>Forward</Form.Label>
+                          <InputGroup>
+                            <Form.Check
+                              type="checkbox"
+                              label="Not Required"
+                              checked={forwarded === "Not Required"}
+                              onChange={handleCheckboxChange1}
+                            />
+                          </InputGroup>
+                        </Form.Group>
+                      </Col>
+                      <Col xs={2} md={3}>
+                        <Form.Group id="taskstatus" className="mb-4">
+                          <Form.Label>Acknowledgement</Form.Label>
+                          <div className="mb-2">
+                            <Form.Check
+                              type="checkbox"
+                              label="Not Required"
+                              checked={ack === "Not Required"}
+                              onChange={() => handleCheckboxChange("Not Required")}
+                            />
+                          </div>
+                          <div>
+                            <Form.Check
+                              type="checkbox"
+                              label="Uploaded"
+                              checked={ack === "Uploaded"}
+                              onChange={() => handleCheckboxChange("Uploaded")}
+                            />
+                          </div>
+                        </Form.Group>
+                      </Col>
 
-                  
+                      <Col>
+                        <Form.Group className="mb-3" controlId="editDescription">
+                          <Form.Label>Type</Form.Label>
+                          <Form.Select required value={type} onChange={(e) => setType(e.target.value)}>
+                            <option value="">Select Option</option>
+                            {Type.map((type, index) => (
+                              <option key={index} value={type} autoFocus>
+                                {type}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <Row>
+                      {/* {(!forwarded || forwarded !== "Not Required") && ( */}
+                      {/* <> */}
+                      {/* File Upload */}
+                      <Col xs={12} md={6}>
+                        <Form.Group id="Project Image" className="mb-4">
+                          <Form.Label>File if Required</Form.Label>
+                          <InputGroup>
+                            <InputGroup.Text></InputGroup.Text>
+                            <Form.Control
+                              type="file"
+                              onChange={handleFileChange}
+                              placeholder="Upload Image"
+                            />
+                          </InputGroup>
+                        </Form.Group>
+                      </Col>
+                      {/* </> */}
+                      {/* )} */}
 
-
-
-                    {/* <Col xs={12} md={6}>
-                      <Form.Group id="ptype" className="mb-4">
-                        <Form.Label>Assign Task To</Form.Label>
-                          {users?(<Multiselect 
-                          selectedValues={selectedusers} 
-                          setSelectedValues={setSelectedusers} 
-                          options={users}/>):(
-                            <p>loading</p>
-                            )}
-                      </Form.Group>
-                    </Col> */}
-                    {/* Previous */}
-                    {/* <Col xs={12} md={6}>
-                      <Form.Group id="ptype" className="mb-4">
-                        <Form.Label>Previous</Form.Label>
-                        <Form.Select  value={previous} onChange={(e) => setPrevious(e.target.value)}>
-                          <option value="">Select Option</option>
-                           {correspondence.map((option,index)=>(
-                            <option value={option._id}>{option.subject}</option>
-                           ))}
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>  */}
-                    {/* Next */}
-                    {/* <Col xs={12} md={6}>
-                      <Form.Group id="ptype" className="mb-4">
-                        <Form.Label>Link to</Form.Label>
-                        <Form.Select value={next} onChange={(e) => setNext(e.target.value)}>
-                          <option value="">Select Option</option>
-                          {correspondence.map((option, index) => (
-                            <option value={option._id}>{option.subject}</option>
-                          ))}
-                        </Form.Select>
-                      </Form.Group>
-                    </Col> */}
-
-
+                      {ack === "Uploaded" && (
+                        <>
+                          {/* Acknowledgement File Upload */}
+                          <Col xs={12} md={6}>
+                            <Form.Group id="Project Image" className="mb-4">
+                              <Form.Label>Acknowledgement File if Required</Form.Label>
+                              <InputGroup>
+                                <InputGroup.Text></InputGroup.Text>
+                                <Form.Control
+                                  type="file"
+                                  onChange={handleFileChange2}
+                                  placeholder="Upload Image"
+                                />
+                              </InputGroup>
+                            </Form.Group>
+                          </Col>
+                        </>
+                      )}
+                    </Row>
+                    {/* Submit Button */}
                     <Col className="d-flex justify-content-center">
-                    {stop?(<Button variant="primary" type="submit" className="w-100 mt-3">
-                        Submit
-                      </Button>):(null)}
-
+                      {stop && (
+                        <Button variant="primary" type="submit" className="w-100 mt-3">
+                          Submit
+                        </Button>
+                      )}
                     </Col>
                   </Row>
                 </form>
               </Container>
             </section>
+
           </Tab.Pane>
         </Tab.Content>
       </Tab.Container>

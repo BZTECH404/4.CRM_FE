@@ -5,10 +5,10 @@ import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fo
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import { baseurl, ProjectStatus,wards } from "../../api";
+import { baseurl, ProjectStatus, wards, companies } from "../../api";
 import { useSelector, useDispatch } from 'react-redux';
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams, Link } from 'react-router-dom';
 import { fetchProjects } from "../../features/projectslice";
 import Multiselect from "../../components/Multiselect";
 import { check } from '../../checkloggedin.js';
@@ -29,6 +29,9 @@ export default () => {
   const [imageUrl, setImageUrl] = useState(null);
   const [isActive, setIsActive] = useState('false');
   let [companyname, setCompanyName] = useState("")
+  let [developerName, setDeveloperName] = useState("")
+  const [contacts, setContacts] = useState([]); // State to hold contact data
+  let [agentName, setAgentName] = useState("")
   let [feactive, setfeactive] = useState("")
   const [users, setUsers] = useState([])
   const [selectedusers, setSelectedusers] = useState([])
@@ -39,6 +42,7 @@ export default () => {
   const [data, setData] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState("form");
+  let [createdoption, setCreatedoption] = useState(0)
   const itemsPerPage = 5; //Define itemsPerPage
 
   // State variables for edit modal
@@ -48,14 +52,14 @@ export default () => {
   const [editProjectStage, setEditProjectStage] = useState('');
   const [editProjectStatus, setEditProjectStatus] = useState('')
   const [editDeveloper, setEditDeveloper] = useState('');
-  const [editCompany, setEditCompany] = useState('');
+  let [editCompany, setEditCompany] = useState('');
   const [editProjectDescription, setEditProjectDescription] = useState('');
   const [editArea, setEditArea] = useState(null);
   const [editimageUrl, setEditImageUrl] = useState(null);
   const [editselectedusers, setEditSelectedusers] = useState([])
   const [addimage, setAddImage] = useState(false)
-  let [editward,setEditWard]=useState("")
-  const [editcts,setEditcts]=useState("")
+  let [editward, setEditWard] = useState("")
+  const [editcts, setEditcts] = useState("")
 
   const [ptype, setPtype] = useState('');
   const [arr, setArr] = useState([]);
@@ -70,12 +74,15 @@ export default () => {
   const [folderName, setFolderName] = useState(''); // State for folder name
   const [folders, setFolders] = useState([]); // State for storing folder names
   const [url, setUrl] = useState('');
-  let [ward,setWard]=useState("")
-  let [cts,setCts]=useState("")
+  let [ward, setWard] = useState("")
+  let [cts, setCts] = useState("")
+  let [stop, setstop] = useState(true)
+
+  const { id: projectId } = useParams();
 
 
   // 
-  const [people,setPeople]=useState([])
+  const [people, setPeople] = useState([])
 
   // For table
   let [regu, setregu] = useState(null)
@@ -86,15 +93,33 @@ export default () => {
 
   let history = useHistory();
 
+
+
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await axios.put(`${baseurl}/contact/all`); // Adjust API endpoint if necessary
+        setContacts(response.data); // Set the fetched contact data in the state
+      } catch (error) {
+        console.error('Error fetching contact:', error);
+      }
+    };
+
+    fetchContacts();
+  }, []);
+
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
+    setstop(false)
     if (file) {
       // Read file extension
       const fileExtension = file.name;
       setSelectedFile(file);
       setFileExtension(fileExtension);
       let arr1 = await triggerFunction(fileExtension, folderName)
-      ////////////////////console.log(arr1)
+      //////////////////////console.log(arr1)
       setUrl(arr1[0]); // Update URL with folderName
       setKey(arr1[1])
       setIsFileSelected(true); // Enable upload button
@@ -103,6 +128,7 @@ export default () => {
       setFileExtension('');
       setIsFileSelected(false); // Disable upload button
     }
+    setstop(true)
   };
 
 
@@ -117,8 +143,8 @@ export default () => {
         const fileContent = event.target.result;
         // Perform your upload logic here
         // For demonstration, let's just log the file extension and content
-        ////////////////////console.log('Selected File Extension:', fileExtension);
-        ////////////////////console.log('File Content:', fileContent);
+        //////////////////////console.log('Selected File Extension:', fileExtension);
+        //////////////////////console.log('File Content:', fileContent);
 
         try {
           // Example: Uploading file content using Fetch
@@ -134,7 +160,7 @@ export default () => {
             throw new Error('Network response was not ok');
           }
 
-          ////////////////////console.log('File uploaded successfully:', responseFile);
+          //////////////////////console.log('File uploaded successfully:', responseFile);
         } catch (error) {
           //console.error('Error:', error);
           toast.error('Failed to add image'); // Display error toast if addition fails
@@ -148,26 +174,27 @@ export default () => {
       try {
         let objid = [];
         for (let i = 0; i < selectedusers.length; i++) {
-          ////////////////////console.log(selectedusers[i]);
+          //////////////////////console.log(selectedusers[i]);
           objid.push(selectedusers[i].id);
         }
-        ////////////////////console.log(objid);
+        //////////////////////console.log(objid);
 
         let body = {
           name: projectName,
           type: ptype,
           status: pstatus,
           stage: pstage,
-          developer: developer,
           description: projectDescription,
           area: area,
           // imageUrl: getPredefinedUrl(key),
           users: objid,
-          company: company,
+          company: companyname,
+          developer: developerName,
+          agent: agentName,
         };
 
         const responseFormData = await axios.post(`${baseurl}/project/create`, body);
-        ////////////////////console.log(responseFormData);
+        //////////////////////console.log(responseFormData);
         toast.success('Image added successfully'); // Call toast.success after successful addition
 
 
@@ -187,7 +214,7 @@ export default () => {
 
   //For Type
   useEffect(() => {
-    ////console.log(check())
+    //////console.log(check())
     // Set the value of arr using some asynchronous operation or any other logic
     const fetchOptions = async () => {
       try {
@@ -217,7 +244,7 @@ export default () => {
   }
 
   const handleDelete = (id) => {
-    ////////////////////console.log(id)
+    //////////////////////console.log(id)
     const token = localStorage.getItem('token');
 
     axios.delete(`${baseurl}/project/${id}`, {
@@ -226,7 +253,7 @@ export default () => {
       }
     })
       .then(response => {
-        ////////////////////console.log('Record deleted successfully:', response.data);
+        //////////////////////console.log('Record deleted successfully:', response.data);
         setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
         window.location.reload()
@@ -240,45 +267,47 @@ export default () => {
 
 
   const handleprojectFetch = async (e) => {
-    //////////////////////console.log(companyname)
-    ////console.log(typeof (isDisabled))
-
+    // //////console.log(companyname)
+    let companyFilter = companyname == "None of the Above" ? "-" : companyname;
+    // //////console.log(companyFilter,"fileter")
     dispatch(fetchProjects({
-      company: companyname ? companyname : null,
+      company: companyFilter,
       status: feactive ? feactive : null,
-      isDisabled: isDisabled == 'true' ? true : false,
+      isDisabled: isDisabled === 'true' ? true : false,
       type: regu ? regu : null,
-      people:people?people:null
-    })).then((resp) => {
-      setData(resp)
-      ////console.log(resp)
-    }).catch(error => {
-
-    })
+      people: people ? people : null
+    }))
+      .then((resp) => {
+        setData(resp);
+      })
+      .catch(error => {
+        // Handle the error appropriately
+        console.error("Error fetching projects:", error);
+      });
   }
 
 
   useEffect(() => {
     //get Projects
-    ////console.log(isDisabled)
+    //////console.log(isDisabled)
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: feactive ? feactive : null,
       isDisabled: isDisabled == 'true' ? true : false
     })).then((resp) => {
       setData(resp)
-      ////console.log(resp)
+      //////console.log(resp)
     }).catch(error => {
 
     })
     // get Users
     axios.get(`${baseurl}/user/`)
       .then(response => {
-        ////////////////////console.log(response.data);
+        //////////////////////console.log(response.data);
         setUsers(response.data);
       })
       .catch(error => {
-        ////////////////////console.log(error);
+        //////////////////////console.log(error);
       });
 
   }, []);
@@ -301,7 +330,7 @@ export default () => {
     setIsFileSelected(false);
   }
   const handleEditModal = (item) => {
-    //console.log(item)
+    //////console.log(item)
 
     let temp = []
     let tempuser = item.users
@@ -313,7 +342,7 @@ export default () => {
         })
       }
     }
-    ////////////////////console.log(temp,"hi")
+    //////////////////////console.log(temp,"hi")
     setEditProjectId(item._id)
     setFolderName(item.name)
     setEditSelectedusers(temp)
@@ -338,7 +367,7 @@ export default () => {
 
   const handleEditSubmit = async (e) => {
     // s3
-   e.preventDefault()
+    e.preventDefault()
 
     if (selectedFile) {
       const reader = new FileReader();
@@ -346,8 +375,8 @@ export default () => {
         const fileContent = event.target.result;
         // Perform your upload logic here
         // For demonstration, let's just log the file extension and content
-        ////////////////////console.log('Selected File Extension:', fileExtension);
-        ////////////////////console.log('File Content:', fileContent);
+        //////////////////////console.log('Selected File Extension:', fileExtension);
+        //////////////////////console.log('File Content:', fileContent);
 
         try {
           // Example: Uploading file content using Fetch
@@ -363,7 +392,7 @@ export default () => {
             throw new Error('Network response was not ok');
           }
           toast.success("File Uploaded Successfully")
-          // //console.log('File uploaded successfully:', responseFile);
+          // //////console.log('File uploaded successfully:', responseFile);
         } catch (error) {
           //console.error('Error:', error);
           toast.error('Failed to add image'); // Display error toast if addition fails
@@ -376,15 +405,15 @@ export default () => {
 
 
 
-    ////////////////////console.log("try")
+    //////////////////////console.log("try")
     const token = localStorage.getItem('token');
-    ////////////////////console.log(users)
+    //////////////////////console.log(users)
     let temp = []
     for (let i = 0; i < editselectedusers.length; i++) {
       temp.push(editselectedusers[i].id)
     }
-    ////////////////////console.log(temp)
-    console.log(editward)
+    //////////////////////console.log(temp)
+    //////console.log(editward)
     const editData = {
       name: editProjectName,
       status: editProjectStatus,
@@ -396,21 +425,21 @@ export default () => {
       stage: editProjectStage,
       imageUrl: addimage && isFileSelected ? getPredefinedUrl(key) : clickedImage,
       users: temp,
-      ward:editward,
-      cts:editcts
+      ward: editward,
+      cts: editcts
 
     };
-    ////////////////////console.log(clickedImage)
+    //////////////////////console.log(clickedImage)
 
 
     try {
-      ////////////////////console.log(editselectedusers)
+      //////////////////////console.log(editselectedusers)
       const response = await axios.put(`${baseurl}/project/${editProjectId}`, editData, {
         headers: {
           Authorization: `${token}`
         }
       });
-      // ////////////////////console.log('Updated data:', response.data);
+      // //////////////////////console.log('Updated data:', response.data);
       toast.success('Data updated successfully');
       setShowModal(false);
       handleprojectFetch()
@@ -437,6 +466,29 @@ export default () => {
       }
     }
     return str;
+  };
+
+  const sortbycreatedby = () => {
+    // Increment the createdoption to toggle through sorting states
+    let temp = createdoption + 1;
+    if (temp > 2) {
+      temp = 1; // Reset to 1 if it exceeds the number of sorting options
+    }
+    setCreatedoption(temp);
+
+    // Make a copy of the data array to avoid mutating the state directly
+    let sortedData = [...data]; // Ensure corr is the state being rendered
+
+    // Sort the data based on created date
+    if (temp === 1) {
+      // Ascending order: Oldest first
+      sortedData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (temp === 2) {
+      // Descending order: Newest first
+      sortedData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    setData(sortedData); // Update the state with the sorted data
   };
 
 
@@ -482,15 +534,17 @@ export default () => {
                       <Form.Label>Company Name</Form.Label>
                       <InputGroup>
                         <InputGroup.Text></InputGroup.Text>
-                        <Form.Select value={companyname} onChange={(e) => {
-                          companyname = e.target.value
-                          setCompanyName(e.target.value);
-                          handleprojectFetch();
+                        <Form.Select required value={companyname} onChange={(e) => {
+                          handleprojectFetch()
+                          setCompanyName(e.target.value)
+                          // //////console.log(e.target.value)
                         }}>
                           <option value="">Select Option</option>
-                          <option value="Neo">Neo Modern</option>
-                          <option value="BZ">BZ Consultants</option>
-                          <option value="PMC">PMC</option>
+                          {companies.map((company, index) => (
+                            <option key={index} value={company}>
+                              {company}
+                            </option>
+                          ))}
                         </Form.Select>
                       </InputGroup>
                     </Form.Group>
@@ -560,7 +614,7 @@ export default () => {
                       </InputGroup>
                     </Form.Group>) : (<p>{check()[1]}</p>)}
                   </Col>
-                  
+
                   <Col xs={12} md={4} className="d-flex justify-content-center">
                     <Button onClick={(e) => {
                       e.preventDefault()
@@ -574,7 +628,7 @@ export default () => {
                   {/* Searching */}
 
                   <Col className="mx-auto">
-                    <Card border="light" className="shadow-sm">
+                    <Card style={{marginLeft:"-5%",width: 'max-content'}} border="light" className="shadow-sm">
                       <Card.Header>
                         <Row className="align-items-center">
                           <Col>
@@ -585,18 +639,22 @@ export default () => {
                           </Col>
                         </Row>
                       </Card.Header>
-                      <Table responsive className="align-items-center table-flush">
+                      <Table responsive  className="align-items-center table-flush">
                         <thead className="thead-light">
                           <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Project Name</th>
-                            <th scope="col">People</th>
-                            <th scope="col">Ward</th>
-                            <th scope="col">CTS</th>
-                            <th scope="col">Type</th>
-                            <th scope="col">Appointment letter</th>
-                            <th scope="col">Area</th>
-                            <th scope="col">Actions</th>
+                            <th  scope="col">#</th>
+                            <th  scope="col" onClick={sortbycreatedby}>Date</th>
+                            <th  scope="col">Project Name</th>
+                            <th  scope="col">Regulation</th>
+                            <th  scope="col">People</th>
+                            <th  scope="col">Ward</th>
+                            <th  scope="col">CTS</th>
+                            <th  scope="col">Type</th>
+                            <th  scope="col">Developer</th>
+                            <th  scope="col">Agent</th>
+                            <th  scope="col">Appointment letter</th>
+                            <th  scope="col">Area</th>
+                            <th  scope="col">Actions</th>
 
 
                           </tr>
@@ -605,29 +663,51 @@ export default () => {
                           {/* {data.slice(startIndex, endIndex).map((row, index) => ( */}
                           {data.map((row, index) => (
                             <tr key={index}>
-                              {/* <td style={{ maxWidth: "100px", cursor: "pointer" }} onClick={()=>handleRedirect(row._id)}>{startIndex + index + 1}</td> */}
-                              <td style={{ maxWidth: "100px", cursor: "pointer" }} onClick={() => handleRedirect(row._id)}>{index + 1}</td>
-                              <td style={{ maxWidth: "100px", cursor: "pointer", whiteSpace: "pre-wrap" }} onClick={() => handleRedirect(row._id)}>{row.name}</td>
-                              <td style={{ maxWidth: "100px", cursor: "pointer", whiteSpace: "pre-wrap" }} >{getUsernameById(row.users)}</td>
-                              <td style={{ maxWidth: "100px", cursor: "pointer", whiteSpace: "pre-wrap" }} onClick={() => handleRedirect(row._id)}>{row.ward}</td>
-                              <td style={{ maxWidth: "100px", cursor: "pointer", whiteSpace: "pre-wrap" }} onClick={() => handleRedirect(row._id)}>{row.cts}</td>
-                              
-                              <td style={{ maxWidth: "100px", cursor: "pointer" }} onClick={() => handleRedirect(row._id)}>{row.type}</td>
-                              {/* <td>
+                              {/* <td style={{ maxWidth: "10px", cursor: "pointer" }} onClick={()=>handleRedirect(row._id)}>{startIndex + index + 1}</td> */}
+
+                              <td style={{ border:"1px solid grey",width: "1.1px", cursor: "pointer" }} onClick={() => handlegreyirect(row._id)}>{index + 1}</td>
+                              <td style={{  border:"1px solid grey",maxWidth: "20px",width:"1px",cursor: "pointer", whiteSpace: "pre-wrap" }}>
+                                {new Date(row.createdAt).toLocaleDateString('en-GB', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric' // 4-digit year
+                                })}
+                              </td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}>
+                                <Link
+                                  to={`/projects/${row._id}`}
+                                  style={{ color: 'blue', textDecoration: 'underline' }}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {row.name}
+                                </Link>
+                              </td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }} >{row.type}</td>
+
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }} >{getUsernameById(row.users)}</td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}>{row.ward}</td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}>{row.cts}</td>
+
+
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer" }}>{row.type}</td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}>{row.developer}</td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}>{row.agent}</td>
+                              {/* <td>  
                                 {row.imageUrl && (
                                   <img
                                     src={row.imageUrl}
                                     alt="Service Image"
-                                    style={{ maxWidth: "100px", cursor: "pointer" }}
+                                    style={{ maxWidth: "1px", cursor: "pointer" }}
                                     onClick={() => handleImageClick(row.imageUrl)}
                                   />
                                 )}
                               </td> */}
                               {/* href={(row.urls[0])?.file} */}
                               {/* {(row.urls[0])?.name} */}
-                              <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}><a download href={row.imageUrl} style={{ textDecoration: "underline", color: "blue" }}>{row.imageUrl == "https://officecrm560.s3.ap-south-1.amazonaws.com/" || row.imageUrl == null ? (null) : (<p>-Appointment Letter</p>)}</a></pre></td>
-                              <td>{row.area}</td>
-                              <td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }}  ><pre style={{ whiteSpace: "pre-wrap" }}><a download href={row.imageUrl} style={{  cursor: "pointer", whiteSpace: "pre-wrap" ,textDecoration: "underline", color: "blue" }}>{row.imageUrl == "https://officecrm560.s3.ap-south-1.amazonaws.com/" || row.imageUrl == null ? (null) : (<p>-Appointment Letter</p>)}</a></pre></td>
+                              <td style={{ border:"1px solid grey",maxWidth: "20px",width:"1px", cursor: "pointer", whiteSpace: "pre-wrap" }} >{row.area}</td>
+                              <td style={{ border:"1px solid grey",maxWidth:"1px"}}>
                                 <Button variant="info" size="sm" onClick={() => handleEditModal(row)}>
                                   <FontAwesomeIcon icon={faEdit} />
                                 </Button>
@@ -687,23 +767,26 @@ export default () => {
                                 <Form.Label>Company Name</Form.Label>
                                 <Form.Select required value={editCompany} onChange={(e) => setEditCompany(e.target.value)}>
                                   <option value="">Select Option</option>
-                                  <option value="Neo">Neo Modern</option>
-                                  <option value="BZ">BZ Consultants</option>
-                                  <option value="PMC">PMC</option>
+                                  {companies.map((company, index) => (
+                                    <option key={index} value={company}>
+                                      {company}
+                                    </option>
+                                  ))}
                                 </Form.Select>
                               </Form.Group>
                               {/* Ward */}
                               <Form.Group className="mb-3" controlId="editDescription">
                                 <Form.Label>Ward</Form.Label>
                                 <Form.Select required value={editward} onChange={(e) => {
-                                  console.log(e.target.value)
-                                  setEditWard(e.target.value)}}>
+                                  //////console.log(e.target.value)
+                                  setEditWard(e.target.value)
+                                }}>
                                   <option value="">Select Option</option>
                                   {wards.map((option) => (
                                     <option value={option}>{option}</option>
                                   ))}
                                 </Form.Select>
-                              </Form.Group> 
+                              </Form.Group>
                               {/* CTS */}
                               <Form.Group className="mb-3" controlId="editHeading">
                                 <Form.Label>CTS</Form.Label>
@@ -725,7 +808,7 @@ export default () => {
                                   ))}
                                 </Form.Select>
                               </Form.Group>
-                              
+
                               <Form.Group className="mb-3" controlId="editHeading">
                                 <Form.Label>Developer</Form.Label>
                                 <Form.Control type="text" value={editDeveloper} onChange={(e) => setEditDeveloper(e.target.value)} />
@@ -747,7 +830,7 @@ export default () => {
                             {check()[1] == 'john_doe' ? (
 
                               <Form.Group className="mb-3" controlId="editIsActive">
-                                <Form.Label>Change Image</Form.Label>
+                                <Form.Label>Change Document</Form.Label>
                                 <Form.Label><a style={{ textDecoration: "underline", color: "blue" }}>{clickedImage}</a></Form.Label>
                                 <InputGroup>
                                   <InputGroup.Text>
@@ -756,7 +839,7 @@ export default () => {
                                     variant="light"
                                     onClick={() => setAddImage(!addimage)}
                                     className="ms-2"
-                                  >Upload New Image</Button>
+                                  >Upload New Document</Button>
                                   {addimage ? (
                                     <Form.Control
                                       type="file"
@@ -785,9 +868,9 @@ export default () => {
                           <Button variant="secondary" onClick={() => setEditMode(false)}>
                             Cancel
                           </Button>
-                          <Button variant="primary" onClick={(e)=>handleEditSubmit(e)}>
-                            Save Changes
-                          </Button>
+                          {stop ? (<><Col className="d-flex justify-content-end">
+                            <Button variant="primary" onClick={(e) => handleEditSubmit(e)}>Submit</Button>
+                          </Col></>) : (<></>)}
                         </Modal.Footer>
                       </Modal>
                     </Card>
@@ -849,16 +932,68 @@ export default () => {
                         <Form.Label>Company Name</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Select required value={company} onChange={(e) => setCompany(e.target.value)}>
+                          <Form.Select value={companyname} onChange={(e) => {
+                            companyname = e.target.value
+                            setCompanyName(e.target.value)
+                            handleprojectFetch()
+                          }}>
                             <option value="">Select Option</option>
-                            <option value="Neo">Neo Modern</option>
-                            <option value="BZ">BZ Consultants</option>
-                            <option value="PMC">PMC</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                    
+
+                    <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Developer Name</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select
+                            value={developerName}
+                            onChange={(e) => {
+                              setDeveloperName(e.target.value);
+                            }}
+                          >
+                            <option value="">Select Option</option>
+                            {contacts
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              // .filter((contact) => contact.type === 'Developer')
+                              .map((contact, index) => (
+                                <option key={index} value={contact.name}>
+                                  {contact.name}
+                                </option>
+                              ))}
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Agent Name</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select
+                            value={agentName}
+                            onChange={(e) => {
+                              setAgentName(e.target.value);
+                            }}
+                          >
+                            <option value="">Select Option</option>
+                            {contacts
+                              .sort((a, b) => a.name.localeCompare(b.name))
+                              // .filter((contact) => contact.type === 'Agent')
+                              .map((contact, index) => (
+                                <option key={index} value={contact.name}>
+                                  {contact.name}
+                                </option>
+                              ))}
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
                     <Col xs={12} md={6}>
                       <Form.Group id="ProjectDescription" className="mb-4">
                         <Form.Label>Project Stage</Form.Label>

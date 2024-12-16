@@ -2,21 +2,21 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab , Nav} from '@themesberg/react-bootstrap';
+import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import {baseurl,ProjectStatus} from "../../api";
+import { baseurl, ProjectStatus, companies } from "../../api";
 import { useSelector, useDispatch } from 'react-redux';
-import {triggerFunction,getPredefinedUrl} from '../../components/SignedUrl';
+import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
-import {check} from '../../checkloggedin'
+import { check } from '../../checkloggedin'
 import Multiselect from "../../components/Multiselect";
 import { fetchProjects } from "../../features/projectslice";
 
 export default () => {
 
   const [imageUrl, setImageUrl] = useState(null);
-  
+
   const [currentPage, setCurrentPage] = useState(0);
   const [clickedImage, setClickedImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -35,37 +35,37 @@ export default () => {
   const [arr, setArr] = useState([]);
 
   ////mine
-  const [key,setKey]=useState("");
-   const [selectedFile, setSelectedFile] = useState(null);
-   const [fileExtension, setFileExtension] = useState('');
-   const [isFileSelected, setIsFileSelected] = useState(false);
-   const [folderName, setFolderName] = useState(''); // State for folder name
-   const [folders, setFolders] = useState([]); // State for storing folder names
-   const [url, setUrl] = useState('');
-   const filepath='../../index.js'
+  const [key, setKey] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileExtension, setFileExtension] = useState('');
+  const [isFileSelected, setIsFileSelected] = useState(false);
+  const [folderName, setFolderName] = useState(''); // State for folder name
+  const [folders, setFolders] = useState([]); // State for storing folder names
+  const [url, setUrl] = useState('');
+  const filepath = '../../index.js'
 
-   let history = useHistory();
+  let history = useHistory();
 
-   const dispatch = useDispatch();
-   // for this file only
-  const [users,setUsers]=useState([])
-  const [username,setUsername]=useState('')
-  const [pname,setPname]=useState('')
-  const [pnamearr,setPnamearr]=useState([])
-  const [tasksubject,setTaskSubject]=useState('')
-  const [taskdescription,setTaskdescription]=useState('')
-  const [assignedby,setassignedby]=useState('')
-  const [selectedusers,setSelectedusers]=useState([])
+  const dispatch = useDispatch();
+  // for this file only
+  const [users, setUsers] = useState([])
+  const [username, setUsername] = useState('')
+  const [pname, setPname] = useState('')
+  const [pnamearr, setPnamearr] = useState([])
+  const [tasksubject, setTaskSubject] = useState('')
+  const [taskdescription, setTaskdescription] = useState('')
+  const [assignedby, setassignedby] = useState('')
+  const [selectedusers, setSelectedusers] = useState([])
 
   const token = localStorage.getItem('token');
 
 
   // project filtering
   let [isActive, setIsActive] = useState(null);
-  let [companyname,setCompanyName]=useState('')
-  let [isActives,setIsActives]=useState(null)
+  let [companyname, setCompanyName] = useState('')
+  let [isActives, setIsActives] = useState(null)
 
-  
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -73,7 +73,7 @@ export default () => {
       const fileExtension = file.name;
       setSelectedFile(file);
       setFileExtension(fileExtension);
-      let arr1=await triggerFunction(fileExtension, folderName)
+      let arr1 = await triggerFunction(fileExtension, folderName)
       setUrl(arr1[0]); // Update URL with folderName
       setKey(arr1[1])
       setIsFileSelected(true); // Enable upload button
@@ -86,95 +86,96 @@ export default () => {
 
   const handleUpload = (e) => {
     e.preventDefault()
-    // //////////////////console.log("hi")
-    if(selectedFile!=null){
-      //////////////////console.log("hi",selectedFile)
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const fileContent = event.target.result;
-      // Perform your upload logic here
-      // For demonstration, let's just log the file extension and content
-      //////////////////console.log('Selected File Extension:', fileExtension);
-      //////////////////console.log('File Content:', fileContent);
-  
-      try {
-        // Example: Uploading file content using Fetch
-        if(selectedFile){
-        const responseFile = await fetch(url, {
-          method: 'PUT',
-          body: fileContent,
-          headers: {
-            'Content-Type': 'application/octet-stream', // Set appropriate content type
-          },
-          mode: 'cors', // Enable CORS
-        });
-        if (!responseFile.ok) {
-          throw new Error('Network response was not ok');
+    // ////////////////////console.log("hi")
+    if (selectedFile != null) {
+      ////////////////////console.log("hi",selectedFile)
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const fileContent = event.target.result;
+        // Perform your upload logic here
+        // For demonstration, let's just log the file extension and content
+        ////////////////////console.log('Selected File Extension:', fileExtension);
+        ////////////////////console.log('File Content:', fileContent);
+
+        try {
+          // Example: Uploading file content using Fetch
+          if (selectedFile) {
+            const responseFile = await fetch(url, {
+              method: 'PUT',
+              body: fileContent,
+              headers: {
+                'Content-Type': 'application/octet-stream', // Set appropriate content type
+              },
+              mode: 'cors', // Enable CORS
+            });
+            if (!responseFile.ok) {
+              throw new Error('Network response was not ok');
+            }
+            ////////////////////console.log('File uploaded successfully:', responseFile);
+          }
+
+          toast.success('Image added successfully'); // Call toast.success after successful addition
+
+          // Reload page after successful submission
+          // window.location.reload();
+
+          // Clear form data after submission
+
+        } catch (error) {
+          //console.error('Error:', error);
+          toast.error('Failed to add image'); // Display error toast if addition fails
         }
-        //////////////////console.log('File uploaded successfully:', responseFile);
-        }
-       
-        toast.success('Image added successfully'); // Call toast.success after successful addition
-  
-        // Reload page after successful submission
-        // window.location.reload();
-  
-        // Clear form data after submission
-       
-      } catch (error) {
-        //console.error('Error:', error);
-        toast.error('Failed to add image'); // Display error toast if addition fails
-      }
-    };
-    reader.readAsArrayBuffer(selectedFile);
-  }
-  // api call
-  (async () => {
-    try {
-      
-      const ids = selectedusers.map(user => user.id);
-      const body = {
-        projectid: pname,
-        assignTaskTo: ids,
-        taskSubject: tasksubject,
-        taskDescription: taskdescription,
-        taskUrl: selectedFile? getPredefinedUrl(key):"hello"
       };
-      //////////////////console.log(body)
-      // Example: Posting additional form data using Axios
-      // const responseFormData = await axios.post(`${baseurl}/project/create`,body, {
-      //   headers: {
-      //     Authorization: `${token}`,
-      //     'Content-Type': 'multipart/form-data', // Set appropriate content type
-      //   },
-      // });
-      const responseFormData = await axios.post(`${baseurl}/task/create`, body);
-      //////////////////console.log(responseFormData);
-      toast.success('Task added successfully'); // Call toast.success after successful addition
-      // window.location.reload()
-      setSelectedFile(null)
-    } catch (error) {
-      //console.error(error);
-      // Assuming res is not defined, use //console.error instead
-      //console.error({ message: "backend error", data: error });
+      reader.readAsArrayBuffer(selectedFile);
     }
-  })();
-    
+    // api call
+    (async () => {
+      try {
+
+        const ids = selectedusers.map(user => user.id);
+        const body = {
+          projectid: pname,
+          assignTaskTo: ids,
+          assignedby:check()[0],
+          taskSubject: tasksubject,
+          taskDescription: taskdescription,
+          taskUrl: selectedFile ? getPredefinedUrl(key) : "hello"
+        };
+        ////////////////////console.log(body)
+        // Example: Posting additional form data using Axios
+        // const responseFormData = await axios.post(`${baseurl}/project/create`,body, {
+        //   headers: {
+        //     Authorization: `${token}`,
+        //     'Content-Type': 'multipart/form-data', // Set appropriate content type
+        //   },
+        // });
+        const responseFormData = await axios.post(`${baseurl}/task/create`, body);
+        ////////////////////console.log(responseFormData);
+        toast.success('Task added successfully'); // Call toast.success after successful addition
+        // window.location.reload()
+        setSelectedFile(null)
+      } catch (error) {
+        //console.error(error);
+        // Assuming res is not defined, use //console.error instead
+        //console.error({ message: "backend error", data: error });
+      }
+    })();
+
   };
 
 
   ////////////////////////////////////////////
 
-  const handleprojectFetch=async()=>{
-    //////////////////console.log(companyname)
-    
+  const handleprojectFetch = async () => {
+    ////////////////////console.log(companyname)
+
     dispatch(fetchProjects({
-      company:companyname?companyname:null,
-      status:isActive?isActive:null
-    })).then((resp)=>{
+      company: companyname ? companyname : null,
+      status: isActive ? isActive : null
+    })).then((resp) => {
       setPnamearr(resp)
-      // //////console.log(resp)
-    }).catch(error=>{
+      // ////////console.log(resp)
+    }).catch(error => {
 
     })
 
@@ -183,25 +184,25 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-   //////////////////console.log(check())
-   axios.get(`${baseurl}/user`)
-   .then(response => {
-     setUsers(response.data);
-   })
-   .catch(error => {
-     //console.error(error);
-   });
-    
+    ////////////////////console.log(check())
+    axios.get(`${baseurl}/user`)
+      .then(response => {
+        setUsers(response.data);
+      })
+      .catch(error => {
+        //console.error(error);
+      });
 
-      handleprojectFetch()
+
+    handleprojectFetch()
   }, []);
 
- 
 
-    
-  
 
-  
+
+
+
+
 
 
   const handleImagesUpload = (event) => {
@@ -218,7 +219,7 @@ export default () => {
       }
     })
       .then(response => {
-        //////////////////console.log('Record deleted successfully:', response.data);
+        ////////////////////console.log('Record deleted successfully:', response.data);
         setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
       })
@@ -227,17 +228,17 @@ export default () => {
         toast.error('Failed to delete record'); // Display error toast
       });
   }
- // Calculate the index of the first item to display based on the current page and items per page
+  // Calculate the index of the first item to display based on the current page and items per page
 
 
 
- 
 
 
- 
+
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    
+
   }
 
 
@@ -275,7 +276,7 @@ export default () => {
           Authorization: `${token}`
         }
       });
-      //////////////////console.log('Updated data:', response.data);
+      ////////////////////console.log('Updated data:', response.data);
       toast.success('Data updated successfully');
       setShowModal(false);
       setData(prevData => prevData.map(item => item._id === editItemId ? { ...item, ...editData } : item));
@@ -286,7 +287,7 @@ export default () => {
   }
 
   // redirect to projects page
-  const handleRedirect=(id)=>{
+  const handleRedirect = (id) => {
     history.push(`/projects/${id}`)
   }
 
@@ -320,61 +321,62 @@ export default () => {
           <Tab.Pane eventKey="home" className="py-4">
             <section className="d-flex align-items-center my-2 mt-lg-3 mb-lg-5">
               <Container>
-                <form onSubmit={(e)=>handleUpload(e)}>
+                <form onSubmit={(e) => handleUpload(e)}>
                   <Row >
-                  <Col xs={12} md={4}>
-            <Form.Group id="pname" className="mb-4">
-              <Form.Label>Company Name</Form.Label>
-              <InputGroup>
-                <InputGroup.Text></InputGroup.Text>
-                <Form.Select value={companyname} onChange={(e) => {
-                  companyname=e.target.value
-                  setCompanyName(e.target.value)
-                  handleprojectFetch()}}>
-                  <option value="">Select Option</option>       
-                  <option value="Neo">Neo Modern</option>
-                  <option value="BZ">BZ Consultants</option>
-                  <option value="PMC">PMC</option>
-                </Form.Select>
-              </InputGroup>
-            </Form.Group>
-          </Col>
-             <Col xs={12} md={4}>
-            <Form.Group id="taskstatus" className="mb-4">
-              <Form.Label>Project Status</Form.Label>
-              <InputGroup>
-                <InputGroup.Text></InputGroup.Text>
-                <Form.Select value={isActive} onChange={(e) =>{
-                isActive=e.target.value
-                setIsActive(e.target.value)
-                handleprojectFetch()
-                }}>
-                 <option value="">Select Option</option>
+                    <Col xs={12} md={4}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Company Name</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select value={companyname} onChange={(e) => {
+                            companyname = e.target.value
+                            setCompanyName(e.target.value)
+                            handleprojectFetch()
+                          }}>
+                            <option value="">Select Option</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={4}>
+                      <Form.Group id="taskstatus" className="mb-4">
+                        <Form.Label>Project Status</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select value={isActive} onChange={(e) => {
+                            isActive = e.target.value
+                            setIsActive(e.target.value)
+                            handleprojectFetch()
+                          }}>
+                            <option value="">Select Option</option>
                             {/* Mapping through the arr array to generate options */}
                             {ProjectStatus.map((option, index) => (
                               <option key={index} value={option}>{option}</option>
                             ))}
-                </Form.Select>
-              </InputGroup>
-            </Form.Group>
-          </Col>
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
                     <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Project name</Form.Label>
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Select  value={pname} onChange={(e) => setPname(e.target.value)}>
-                          <option value="">Select Option</option>
+                          <Form.Select value={pname} onChange={(e) => setPname(e.target.value)}>
+                            <option value="">Select Option</option>
                             {/* Mapping through the arr array to generate options */}
                             {pnamearr.map((option, index) => (
                               <option key={index} value={option._id}>{option.name}</option>
                             ))}
                           </Form.Select>
-                       </InputGroup>
+                        </InputGroup>
                       </Form.Group>
                     </Col>
-                   
+
                     <Col xs={12} md={6}>
                       <Form.Group id="tasksubject" className="mb-4">
                         <Form.Label>Task Subject</Form.Label>
@@ -393,7 +395,7 @@ export default () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                    
+
                     <Col xs={12} md={6}>
                       <Form.Group id="Project Image" className="mb-4">
                         <Form.Label>Task Image if Required</Form.Label>
@@ -411,16 +413,16 @@ export default () => {
                     <Col xs={12} md={6}>
                       <Form.Group id="ptype" className="mb-4">
                         <Form.Label>Assign Task To</Form.Label>
-                          {users?(<Multiselect 
-                          selectedValues={selectedusers} 
-                          setSelectedValues={setSelectedusers} 
-                          options={users}/>):(
-                            <p>loading</p>
-                            )}
+                        {users ? (<Multiselect
+                          selectedValues={selectedusers}
+                          setSelectedValues={setSelectedusers}
+                          options={users} />) : (
+                          <p>loading</p>
+                        )}
                       </Form.Group>
                     </Col>
                     <Col xs={12} md={6}>
-                     
+
                     </Col>
                     {/* <Col xs={12} md={6}>
                       <Form.Group id="ptype" className="mb-4">
@@ -433,7 +435,7 @@ export default () => {
                         </Form.Select>
                       </Form.Group>
                     </Col> */}
-                   
+
                     <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
                       <Button variant="primary" type="submit" className="w-100 mt-3">
                         Submit

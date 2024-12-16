@@ -6,7 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import {baseurl} from "../api";
 
-const initialState = {
+let initialState = {
 questions: [],
   loading: false,
   error: null
@@ -21,7 +21,7 @@ const datasSlice = createSlice({
       state.error = null;
     },
     fetchDataSuccess(state, action) {
-        ////////////////console.log("state,action")
+        //////////////////console.log("state,action")
       state.questions = action.payload;
       state.loading = false;
     },
@@ -37,9 +37,9 @@ export const { fetchDataStart, fetchDataSuccess, fetchDataFailure } = datasSlice
 export const getquestions = () => async (dispatch) => {
   dispatch(fetchDataStart());
   try {
-    const response = await axios.put(`${baseurl}/question/`)
+    let response = await axios.put(`${baseurl}/question/`)
     // const sortedData = (response.data).sort((a, b) => a.name.localeCompare(b.name));
-    //console.log(response.data)
+    //////console.log(response.data)
     dispatch(fetchDataSuccess(response.data));
     return response.data
   } catch (error) {
@@ -50,7 +50,7 @@ export const getquestions = () => async (dispatch) => {
 // export const disableConsolidated = (id) => async (dispatch) => {
 //   dispatch(fetchDataStart());
 //   try {
-//     ////console.log(id)
+//     //////console.log(id)
 //     const token = localStorage.getItem('token');
 //     const response = await axios.put(`${baseurl}/consolidated/disable/${id}`,{
 //       headers: {
@@ -66,19 +66,19 @@ export const getquestions = () => async (dispatch) => {
 
 // export const getcontact=(data)=>async(dispatch)=>{
 
-//     ////////////////console.log("hello")
+//     //////////////////console.log("hello")
 //     const body={
 //         project:undefined,
 //         type:undefined
 //     }
-//     ////////////////console.log(body)
+//     //////////////////console.log(body)
 //     try {
 //       const response = await axios.put(`${baseurl}/contact/all`,body);
 //       // setData(response.data);
-//       // //////////////console.log(response.data)
+//       // ////////////////console.log(response.data)
 //       // initialState.contacts=response.data
 //       dispatch(fetchDataSuccess(response.data));
-//       // //////////////console.log("hi")
+//       // ////////////////console.log("hi")
 
 //     } catch (error) {
 //       //console.error(error);

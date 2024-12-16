@@ -6,7 +6,7 @@ export default ({options,selectedValues,setSelectedValues,tag}) => {
   const [selectedValue, setSelectedValue] = useState(null);
 
 tag=tag?tag:'People'
-////////////////console.log(tag,selectedValues)
+//////////////////console.log(tag,selectedValues)
 
 
   const handleChange = (e) => {
@@ -37,7 +37,7 @@ tag=tag?tag:'People'
         <Col xs={12} md={6}>
                       <Form.Group id="ProjectName" className="mb-4">
                         <InputGroup>
-                          <Form.Select required value={selectedValue ? selectedValue.id : ''} onChange={handleChange}>
+                          <Form.Select value={selectedValue ? selectedValue.id : ''} onChange={handleChange}>
                              <>
                                 <option value="">Select Option</option>
                                 {options.map((option) => (

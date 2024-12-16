@@ -1,118 +1,200 @@
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faAngleDown,faTrash, faAngleUp, faArrowDown, faArrowUp, faEdit, faEllipsisH, faExternalLinkAlt, faEye, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { Col, Row, Nav, Card,Modal,Form, Image, Button, Table, Dropdown, ProgressBar, Pagination, ButtonGroup } from '@themesberg/react-bootstrap';
+import { faAngleDown, faTrash, faAngleUp, faArrowDown, faArrowUp, faEdit, faEllipsisH, faExternalLinkAlt, faEye, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { Col, Row, Nav, Card, Modal, Form, Image, Button, Table, Dropdown, ProgressBar, Pagination, ButtonGroup } from '@themesberg/react-bootstrap';
 import { Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import { Routes } from "../routes";
 import { pageVisits, pageTraffic, pageRanking } from "../data/tables";
 import transactions from "../data/transactions";
 import commands from "../data/commands";
-import {baseurl} from "../api";
+import Multiselect from "../components/Multiselect";
+
+import { baseurl } from "../api";
+import ViewTaskHistory from "../pages/components/ViewTaskHistory";
+import { fetchAsyncData } from "../features/userslice";
+import { getAllBuckets, deleteTaskFromBucket } from "../features/bucketslice";  // Import your action
+import { check } from "../checkloggedin"
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProjects } from "../features/projectslice";
 
 // 
 
 
-const ValueChange = ({ value, suffix }) => {
-  const valueIcon = value < 0 ? faAngleDown : faAngleUp;
-  const valueTxtColor = value < 0 ? "text-danger" : "text-success";
 
-  return (
-    value ? <span className={valueTxtColor}>
-      <FontAwesomeIcon icon={valueIcon} />
-      <span className="fw-bold ms-1">
-        {Math.abs(value)}{suffix}
-      </span>
-    </span> : "--"
-  );
-};
 
 export const PageVisitsTable = (props) => {
 
   //mine
-  const {data,call}=props
-  
-   //For Fetching Projects
-   
-// const [showModal, setShowModal] = useState(false);
-// const [showModal1, setShowModal1] = useState(false);
+  let { data, handleComplete, setrefreshbucket, refreshbucket, fetchBuckets, handleSaveChanges, filteredBuckets } = props
+
+  //For Fetching Projects
+
+  // const [showModal, setShowModal] = useState(false);
+  // const [showModal1, setShowModal1] = useState(false);
 
 
 
-const [history,setHistory]=useState([])
-const [taskthis,settaskthis]=useState(false);
-const [showModal1,setShowModal1]=useState(false);
-
+  const [history, setHistory] = useState([])
+  const [taskthis, settaskthis] = useState(false);
+  const [showModal1, setShowModal1] = useState(false);
+  const [taskIds, setTaskIds] = useState([]);
 
   // view task History
- //view add History
- const [taskid,seteditTaskid]=useState("")
- const [texthistory,setaddtexthistory]=useState("")
- const [showModal2,setShowModal2]=useState(false);
- const [pnamearr,setPnamearr]=useState([]);
+  //view add History
+  const [taskid, seteditTaskid] = useState("")
+  const [texthistory, setaddtexthistory] = useState("")
+  const [showModal2, setShowModal2] = useState(false);
+  const [pnamearr, setPnamearr] = useState([]);
+  const [showModal3, setShowModal3] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [completedtasks, setcompletedTasks] = useState([]);
+  const [incompletedtasks, setincompletedTasks] = useState([]);
+  let [iccta, seticcta] = useState([])
+  const [buckets, setBuckets] = useState([]);  // Initialize buckets state
+  const dispatch = useDispatch();
+
+
+  const [reverse, setreverse] = useState(false)
+
+  const { user1, loading, error } = useSelector((state) => state.users);
+  // for edit modal
+  const [editassignTaskTo, setEditassignTaskTo] = useState([])
+  const [editprojectname, setEditprojectname] = useState("")
+  const [edittaskDescription, setEdittaskDescription] = useState("")
+  const [edittaskSubject, setEdittaskSubject] = useState("")
+  const [showModal, setShowModal] = useState("")
+  // const []
 
   useEffect(() => {
+    fetchBuckets();  // handleComplete the fetch function
     // Fetch users and projects
-   axios.put(`${baseurl}/project/`)
-    .then(response => {
-      setPnamearr(response.data);
-      // //////////////////console.log(response.data)
-    })
-    .catch(error => {
-      //console.error(error);
-    });
-    },[])
 
-    const findprojectname=(id)=>{
-      //////////////////console.log(id,pnamearr)
-      for(let i=0;i<pnamearr.length;i++){
-        if(pnamearr[i]._id===id){
-          return pnamearr[i].name
-        }
+    iccta = data
+    seticcta(data)
+  }, [data]);
+
+  useEffect(() => {
+    //////console.log(filteredBuckets)
+    iccta = data
+    seticcta(data)
+  }, [reverse, filteredBuckets])
+
+  useEffect(() => {
+    // Fetch projects and Users
+    dispatch(fetchProjects({
+    })).then((resp) => {
+      setPnamearr(resp)
+      // //////console.log(resp)
+    }).catch(error => {
+    })
+
+
+    dispatch(fetchAsyncData()).then((data) => {
+      // //console.log(data)
+    }).catch((err) => {
+
+    })
+  }, [])
+  useEffect(() => {
+    // //console.log(user1)
+  }, [loading])
+
+  const findprojectname = (id) => {
+    // //////console.log(id,pnamearr)
+    for (let i = 0; i < pnamearr.length; i++) {
+      if (pnamearr[i]._id == id) {
+        // //////console.log(pnamearr[i].name)
+        return pnamearr[i].name
       }
     }
+  }
+  const sortbydate = () => {
+    data = data.reverse()
+    setreverse(!reverse)
+  }
 
 
- const handletaskhistory=async (row)=>{
-    //////////////////console.log("hi")
-    try{
+  const handletaskhistory = async (row) => {
+    ////////////////////console.log("hi")
+    try {
       // fetching all Histories of one task
-      let response=await axios.get(`${baseurl}/history/${row._id}`)
-      let temp=[]
-      
-      for(let i=0;i<response.data.length;i++){
-      let res=await axios.get(`${baseurl}/history/single/${(response.data)[i]._id}`)
-      temp.push(res.data)
-      //////////////////console.log(temp)
+      let response = await axios.get(`${baseurl}/history/${row._id}`)
+      let temp = []
+
+      for (let i = 0; i < response.data.length; i++) {
+        let res = await axios.get(`${baseurl}/history/single/${(response.data)[i]._id}`)
+        temp.push(res.data)
+        ////////////////////console.log(temp)
       }
       setHistory(temp)
-      
-   
-    }catch(error){
-      //////////////////console.log(error)
+
+
+    } catch (error) {
+      ////////////////////console.log(error)
     }
-   
-    
+
+
     setShowModal1(true)
     settaskthis(true)
   }
 
-  const handleaddtaskhistory=async (row)=>{
-    //////////////////console.log(row._id)
+  const handleaddtaskhistory = async (row) => {
+    ////////////////////console.log(row._id)
     seteditTaskid(row._id)
+    //////console.log(row._id)
     setShowModal2(true)
-    
+
   }
 
-  const handleaddhistorysubmit=async(row)=>{
-    //////////////////console.log(texthistory)
+
+
+  const handleEditSubmit = async () => {
+    //////////////////console.log(taskid,"chekcing task id")
+    const token = localStorage.getItem('token');
+    let temp = []
+    for (let i = 0; i < editassignTaskTo.length; i++) {
+      temp.push(editassignTaskTo[i].id)
+    }
+    const editData = {
+      assignTaskTo: temp,
+      projectid: editprojectname,
+      taskDescription: edittaskDescription,
+      taskSubject: edittaskSubject
+    };
+    //////////////////console.log(editData)
+
+    try {
+      const response = await axios.put(`${baseurl}/task/${taskid}`, editData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      //////////////////console.log(response.data);
+      toast.success("Task updated successfully");
+      setShowModal(false);
+      seteditTaskid("")
+      setEditassignTaskTo([])
+      setEditprojectname("")
+      setEdittaskDescription("")
+      setEdittaskSubject("")
+      setrefreshbucket(!refreshbucket)
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update task");
+    }
+  }
+
+
+
+  const handleaddhistorysubmit = async (row) => {
+    ////////////////////console.log(texthistory)
     const token = localStorage.getItem('token');
     const editData = {
       taskDescription: texthistory,
     };
-    //////////////////console.log(editData)
+    ////////////////////console.log(editData)
 
     try {
       const response = await axios.post(`${baseurl}/history/create/${taskid}`, editData, {
@@ -120,7 +202,7 @@ const [showModal1,setShowModal1]=useState(false);
           Authorization: `Bearer ${token}`
         }
       });
-      //////////////////console.log(response.data);
+      ////////////////////console.log(response.data);
       // toast.success("History added successfully");
       setShowModal2(false);
       setaddtexthistory("")
@@ -130,9 +212,9 @@ const [showModal1,setShowModal1]=useState(false);
     }
   }
 
-  const handledeletetaskhistory=async(row)=>{
+  const handledeletetaskhistory = async (row) => {
 
-    try{
+    try {
       const token = localStorage.getItem('token');
       const response = await axios.delete(`${baseurl}/history/${row.taskHistory._id}`, {
         headers: {
@@ -141,156 +223,245 @@ const [showModal1,setShowModal1]=useState(false);
       });
       toast.success("History deleted successfully");
       setShowModal1(false)
-    }catch(error){
+    } catch (error) {
       toast.error(error.message)
     }
-    
+
+  }
+  const handleedittaskHistory = async (row) => {
+
+    setShowModal2(true)
+    setTaskhistoryId(row.taskHistory._id)
+    setTextHistory(row.taskHistory.taskDescription)
+
+  }
+  const getUsernameById = (assignTaskTo) => {
+    let str = "";
+    for (let i = 0; i < assignTaskTo.length; i++) {
+      for (let j = 0; j < user1.length; j++) {
+        if (user1[j]._id === assignTaskTo[i]) {
+          str = str + user1[j].username + " ";
+          break;
+        }
+      }
     }
-    
-  
-  
-  //
-  const pageVisits = [
-    { id: 1, views: 4.525, returnValue: 255, bounceRate: 42.55, pageName: "/demo/admin/index.html" },
-    { id: 2, views: 2.987, returnValue: 139, bounceRate: -43.52, pageName: "/demo/admin/forms.html" },
-    { id: 3, views: 2.844, returnValue: 124, bounceRate: -32.35, pageName: "/demo/admin/util.html" },
-    { id: 4, views: 1.220, returnValue: 55, bounceRate: 15.78, pageName: "/demo/admin/validation.html" },
-    { id: 5, views: 505, returnValue: 3, bounceRate: -75.12, pageName: "/demo/admin/modals.html" }
-];
-  const TableRow = (props) => {
-    const { pageName, views, returnValue, bounceRate } = props;
-    const bounceIcon = bounceRate < 0 ? faArrowDown : faArrowUp;
-    const bounceTxtColor = bounceRate < 0 ? "text-danger" : "text-success";
-
-    return (
-      <tr>
-        <th scope="row">{pageName}</th>
-        <td>{views}</td>
-        <td>${returnValue}</td>
-        <td>
-          <FontAwesomeIcon icon={bounceIcon} className={`${bounceTxtColor} me-3`} />
-          {Math.abs(bounceRate)}%
-        </td>
-      </tr>
-    );
+    return str;
   };
+  const handleEditModal = (item) => {
+    //////////////////console.log(item)
+    let temp = []
+    let tempuser = item.assignTaskTo
+    for (let j = 0; j < user1.length; j++) {
+      if ((tempuser).includes(user1[j]._id)) {
+        temp.push({
+          id: user1[j]._id,
+          name: user1[j].username,
+        })
+      }
+    }
+    seteditTaskid(item._id)
+    setEditassignTaskTo(temp)
+    setEditprojectname(item.projectid)
+    setEdittaskDescription(item.taskDescription)
+    setEdittaskSubject(item.taskSubject)
+    setShowModal(true);
+    // setEditMode(true); // Set editMode to true when opening the edit modal
+  }
 
-  const TableRow1 = ({ data,hello }) => {
+
+  const TableRow1 = ({ data2, hello }) => {
     // Format the CreatedAt date
-    const formattedDate = new Date(data.CreatedAt).toLocaleDateString('en-GB');
-    // //////////////////console.log(data)
+    const formattedDate = new Date(data2.CreatedAt).toLocaleDateString('en-GB');
+
     return (
-      
-      <tr style={{ maxWidth: "100px", cursor: "pointer",whiteSpace:"pre-wrap" }}>
-        <td onClick={() => handletaskhistory(data)} scope="row">{findprojectname(data.projectid)}</td>
-        <td onClick={() => handletaskhistory(data)}>{data.taskSubject}</td>
-         <td style={{ maxWidth: "100px", cursor: "pointer",whiteSpace:"pre-wrap" }}
-         onClick={() => handletaskhistory(data)}><pre style={{whiteSpace:"pre-wrap" }}>{data.taskDescription}</pre></td>
-        <td onClick={() => handletaskhistory(data)}>{formattedDate}</td> 
-        <Button onClick={() => handleaddtaskhistory(data)} style={{color:"grey"}}>Add</Button>
-        <Button  style={{color:"grey"}} onClick={()=>call(data._id,data.taskCompleted)}>{data.taskCompleted?(<>Mark incomplete</>):(<>Mark complete</>)}</Button>
-      </tr>
+      <>
+        {pnamearr && (
+          <tr style={{ maxWidth: "100px", cursor: "pointer", whiteSpace: "pre-wrap" }}>
+            <td style={{ width: "2%" }} onClick={() => handletaskhistory(data2)}>{formattedDate}</td>
+            <td style={{ width: "2%", textDecoration: "underline", color: "blue", whiteSpace: "pre-wrap" }} onClick={() => handletaskhistory(data2)} scope="row">{findprojectname(data2.projectid)}</td>
+            <td style={{ width: "2%", whiteSpace: "pre-wrap" }} onClick={() => handletaskhistory(data2)}>{data2.taskSubject}</td>
+
+            <td style={{ width: "2%", cursor: "pointer", whiteSpace: "pre-wrap" }}
+              onClick={() => handletaskhistory(data2)}>
+              <pre style={{ whiteSpace: "pre-wrap" }}>{data2.taskDescription}</pre>
+            </td>
+            <td style={{ width: "2%", whiteSpace: "pre-wrap" }} onClick={() => handletaskhistory(data2)}>{getUsernameById([data2.assignedby])}</td>
+            <td style={{ width: "10%" }}>
+              <Button style={{ backgroundColor: "black", color: "grey" }} variant="info" size="sm" onClick={() => handleEditModal(data2)}>
+                <FontAwesomeIcon icon={faEdit} />
+              </Button>
+              <Button onClick={() => handleaddtaskhistory(data2)} style={{ color: "grey", height: "40px" }}>Add</Button>
+              <Button style={{ color: "grey", height: "40px" }} onClick={() => handleComplete(data2._id, data2.taskCompleted)}>
+                {data2.taskCompleted ? <>Mark incomplete</> : <>Mark complete</>}
+              </Button>
+              <Button onClick={() => handleSaveChanges(data2)} style={{ color: "grey", height: "40px" }}>
+                {checkinbuckets(data2._id) === false ? <p>Bucket</p> : <p>Already in Bucket</p>}
+              </Button>
+            </td>
+          </tr>
+        )}
+
+      </>
     );
   };
+
+  const checkinbuckets = (taskId) => {
+    if (filteredBuckets == undefined || filteredBuckets.length == 0) {
+      return false
+    }
+    else {
+      let alltasks = filteredBuckets[0].tasks
+      let flag = false
+      for (let i = 0; i < alltasks.length; i++) {
+        if (alltasks[i]._id == taskId) {
+          flag = true
+        }
+      }
+      return (flag)
+    }
+
+  }
   return (
-    
-    <Card border="light" className="shadow-sm">
-      <Card.Header>
-        <Row className="align-items-center">
-          <Col>
-            <h5>Tasks</h5>
-          </Col>
-          <Col className="text-end">
-            <Button variant="secondary" size="sm">See all</Button>
-          </Col>
-        </Row>
-      </Card.Header>
-      <Table responsive className="align-items-center table-flush">
-        <thead className="thead-light">
-          <tr >
-            <th scope="col">Project Name</th>
-            <th scope="col">Task subject</th>
-            <th scope="col">Task Description</th>
-            <th scope="col">Created At</th>
-            
-            {/* <th scope="col">Add Task Event Mark Task Complete</th> */}
-            {/* <th scope="col"></th> */}
-            <th></th>
-            
-          </tr>
-        </thead>
-        <tbody>
-        {data.map((data) => (
-          <>
-            <TableRow1 
-              key={data._id} // Assuming _id is unique for each task
-              data={data}
-            />
-          </>
-          ))}
-        </tbody>
+    <>
+      <Card border="light" className="shadow-sm">
+        <Card.Header>
+          <Row className="align-items-center">
+            <Col>
+              <h5>Tasks</h5>
+            </Col>
+            <Col className="text-end">
+              <Button variant="secondary" size="sm">See all</Button>
+            </Col>
+          </Row>
+        </Card.Header>
+        <Table responsive className="align-items-center table-flush">
+          <thead className="thead-light">
+            <tr >
+              <th scope="col" onClick={() => {
+                sortbydate()
+              }} style={{ cursor: "pointer", textDecoration: "underline", color: "blue" }}>Created At</th>
+              <th scope="col">Project Name</th>
+              <th scope="col">Task subject</th>
+              <th scope="col">Task Description</th>
+              <th scope="col">Assigned By</th>
 
-            {/* view history */}
-        <Modal className="#modal-content" style={{ width: "100%" }} show={showModal1 && taskthis} onHide={() => settaskthis(false)}>
-              <Modal.Header closeButton>
-                <Modal.Title>Add Task History</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <Table responsive className="align-items-center table-flush">
-                  <thead className="thead-light">
-                    <tr>
-                      <th scope="col">Created At
-                      
-                                </th>
-                      <th scope="col">History Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((row) => (
-                      <tr key={row.taskHistory._id}>
-                        <td>{row.taskHistory.CreatedAt}
-                        <Button variant="danger" size="sm" onClick={() => handledeletetaskhistory(row)}>
-                                  <FontAwesomeIcon icon={faTrash} />
-                                </Button></td>
-                        <td><pre>{row.taskHistory.taskDescription}</pre></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Modal.Body>
-              <Modal.Footer>
-                
-                <Button variant="secondary" onClick={() => settaskthis(false)}>
-                  Cancel
-                </Button>
-              </Modal.Footer>
-            </Modal>
+              {/* <th scope="col">Add Task Event Mark Task Complete</th> */}
+              {/* <th scope="col"></th> */}
+              <th></th>
 
-        {/* add history */}
-        <Modal className="#modal-content" style={{ width: "100%" }} show={showModal2} onHide={() => setShowModal2(false)}>
-              <Modal.Header closeButton>
-                <Modal.Title>Add Task History</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredBuckets && (<>
+              {iccta.map((data1) => (
+                <TableRow1
+                  key={data1._id} // Ensure _id is unique for each task
+                  data2={data1}
+                />
+              ))}
+            </>)}
+
+
+
+
+          </tbody>
+
+          <ViewTaskHistory history={history} showModal1={showModal1} setShowModal1={setShowModal1} />
+
+
+          {/* add history */}
+          <Modal className="#modal-content" style={{ width: "100%" }} show={showModal2} onHide={() => setShowModal2(false)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Add Task History</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
               <Form.Group className="mb-3" controlId="editHeading">
-                <textarea rows="8" style={{width:"100%"}} value={texthistory} onChange={(e) => setaddtexthistory(e.target.value)} /> 
-                </Form.Group>
+                <textarea rows="8" style={{ width: "100%" }} value={texthistory} onChange={(e) => setaddtexthistory(e.target.value)} />
+              </Form.Group>
+
+
+            </Modal.Body>
+            <Modal.Footer>
+
+              <Button variant="secondary" onClick={() => setShowModal2(false)}>
+                Cancel
+              </Button>
+              <Button style={{ backgroundColor: "greenyellow" }} variant="secondary" onClick={handleaddhistorysubmit}>
+                Save Changes
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+
+        </Table>
+      </Card>
+
+
+      {/* edit modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header>
+          <Modal.Title>Edit Tasks</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+
+          {/* <Form.Group className="mb-3" controlId="editDescription">
+                       <Form.Label>Project name</Form.Label>
+             <Form.Select required value={editprojectname} onChange={(e) => setEditprojectname(e.target.value)}>
+                   <option value="">Select Option</option>
                     
-                
-              </Modal.Body>
-              <Modal.Footer>
-                
-                <Button variant="secondary" onClick={() => setShowModal2(false)}>
-                  Cancel
-                </Button>
-                <Button style={{backgroundColor:"greenyellow"}} variant="secondary" onClick={handleaddhistorysubmit}>
-                  Save Changes
-                </Button>
-              </Modal.Footer>
+                     {pnamearr.map((option, index) => (
+                       <option key={index} value={option._id}>{option.name}</option>
+                     ))}
+                   </Form.Select>
+                   </Form.Group> */}
+          <Form.Group className="mb-3" controlId="editHeading">
+            <Form.Label>Task Description</Form.Label>
+            <textarea rows="4" cols="50" type="text" value={edittaskDescription} onChange={(e) => setEdittaskDescription(e.target.value)} />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="editHeading">
+            <Form.Label>Task Subject</Form.Label>
+            <Form.Control type="text" value={edittaskSubject} onChange={(e) => setEdittaskSubject(e.target.value)} />
+          </Form.Group>
+
+          {/* People */}
+          <Form.Group className="mb-3" controlId="editIsActive">
+            {user1 ? (<Multiselect
+              selectedValues={editassignTaskTo}
+              setSelectedValues={setEditassignTaskTo}
+              options={user1} />) : (
+              <p>loading</p>
+            )}
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleEditSubmit}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
       </Modal>
-      
-      </Table>
-    </Card>
+    </>
+  );
+};
+
+
+const TableRow = (props) => {
+  const { pageName, views, returnValue, bounceRate } = props;
+  const bounceIcon = bounceRate < 0 ? faArrowDown : faArrowUp;
+  const bounceTxtColor = bounceRate < 0 ? "text-danger" : "text-success";
+
+  return (
+    <tr>
+      <th scope="row">{pageName}</th>
+      <td>{views}</td>
+      <td>${returnValue}</td>
+      <td>
+        <FontAwesomeIcon icon={bounceIcon} className={`${bounceTxtColor} me-3`} />
+        {Math.abs(bounceRate)}%
+      </td>
+    </tr>
   );
 };
 
@@ -406,6 +577,21 @@ export const RankingTable = () => {
         </Table>
       </Card.Body>
     </Card>
+  );
+};
+
+
+const ValueChange = ({ value, suffix }) => {
+  const valueIcon = value < 0 ? faAngleDown : faAngleUp;
+  const valueTxtColor = value < 0 ? "text-danger" : "text-success";
+
+  return (
+    value ? <span className={valueTxtColor}>
+      <FontAwesomeIcon icon={valueIcon} />
+      <span className="fw-bold ms-1">
+        {Math.abs(value)}{suffix}
+      </span>
+    </span> : "--"
   );
 };
 

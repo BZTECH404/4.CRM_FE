@@ -21,7 +21,7 @@ const datasSlice = createSlice({
       state.error = null;
     },
     fetchDataSuccess(state, action) {
-        ////////////////console.log("state,action")
+        //////////////////console.log("state,action")
       state.contacts = action.payload;
       state.loading = false;
     },
@@ -51,7 +51,7 @@ export const deleteContact = (data) => async (dispatch) => {
   dispatch(fetchDataStart());
   try {
     const token = localStorage.getItem('token');
-    //////////////console.log(data)
+    console.log(data)
     const response = await axios.delete(`${baseurl}/contact/${data}`,{
       headers: {
         Authorization: `${token}`
@@ -59,6 +59,7 @@ export const deleteContact = (data) => async (dispatch) => {
      return true;
     dispatch(fetchDataSuccess(response.data));
   } catch (error) {
+    // console.log(error)
     return false
     dispatch(fetchDataFailure(error.message));
   }
@@ -66,19 +67,19 @@ export const deleteContact = (data) => async (dispatch) => {
 
 // export const getcontact=(data)=>async(dispatch)=>{
 
-//     ////////////////console.log("hello")
+//     //////////////////console.log("hello")
 //     const body={
 //         project:undefined,
 //         type:undefined
 //     }
-//     ////////////////console.log(body)
+//     //////////////////console.log(body)
 //     try {
 //       const response = await axios.put(`${baseurl}/contact/all`,body);
 //       // setData(response.data);
-//       // //////////////console.log(response.data)
+//       // ////////////////console.log(response.data)
 //       // initialState.contacts=response.data
 //       dispatch(fetchDataSuccess(response.data));
-//       // //////////////console.log("hi")
+//       // ////////////////console.log("hi")
 
 //     } catch (error) {
 //       //console.error(error);

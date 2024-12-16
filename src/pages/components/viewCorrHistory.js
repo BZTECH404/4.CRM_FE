@@ -60,11 +60,11 @@ const ViewCorrHistory = ({ resett,id, history, setHistory, showModal1, setShowMo
 
   }
   const handleeditorder = (id, value) => {
-    // console.log(id, value)
+    // //////console.log(id, value)
     let updatedFiles = [...history];
     for (let i = 0; i < updatedFiles.length; i++) {
       if (updatedFiles[i]._id === id) {
-        // console.log("found")
+        // //////console.log("found")
         updatedFiles[i] = { ...updatedFiles[i], order: Number(value) };
         break; // Exit the loop once the file is found and updated
       }
@@ -93,7 +93,7 @@ const ViewCorrHistory = ({ resett,id, history, setHistory, showModal1, setShowMo
     }
 
     catch (error) { 
-      console.log(error)
+      //////console.log(error)
     }
 
 

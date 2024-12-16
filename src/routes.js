@@ -26,7 +26,7 @@
 //     ServerError: { path: "/examples/500" },
 
 import createConsolidated from "./pages/Billing/createConsolidated";
-import CreateFormat from "./pages/format/CreateFormat";
+import CreateFormat from "./pages/format/createformat";
 
 //     // docs
 //     DocsOverview: { path: "/documentation/overview" },
@@ -69,7 +69,8 @@ export const Routes = {
     BootstrapTables: { path: "/tables/bootstrap-tables" },
     // Projects
     CreateProjects: {path: "/projects/createProjects"},
-    Motivation: {path: "/projects/:id"},
+    ViewProjects: {path: "/projects/:id"},
+    Client: {path: "/projectss/:id"},
     Service: {path: "/projects/editprojects"},
     Question:{path:"/projects/question"},
 
@@ -77,6 +78,12 @@ export const Routes = {
     CreateTasks: {path: "/tasks/createTasks"},
     ViewTasks: {path: "/tasks/viewTasks"},
 
+    // Buckets
+    CreateBucket: {path: "/buckets/createBucket"},
+    ViewBucket: {path: "/buckets/viewBucket"},
+
+  
+    // Aboutus
     Testimonial: {path: "/about/testimonial"},
     Services: {path: "/services/services"},
     Contact: {path: "/contact/contact"},
@@ -128,6 +135,9 @@ export const Routes = {
 
     // ViewLetter:{path:"/correspondence/view"},
 
+    // Tools
+    
+
 
     // Finance
     CreateInvoice:{path:'/billing/createinvoice'},
@@ -138,8 +148,18 @@ export const Routes = {
     // Credit
 
     // Format
+    CreateTemplate:{path:"/feasibility/createTemplate"},
     CreateFormat:{path:'/format/create'},
+    ViewTemplate:{path:"/feasibility/viewTemplate"},
+    EditTemplate:{path:"/feasibility/:id"},
+    EditFormat:{path:"/format/:id"},
+    AddWatermark:{path:"/tools/addWatermark"},
+    AddWatermarks:{path:"/tools/addWatermarks"},
+
     Questions:{path:'/format/questions'},
+
+    // Routes
+    viewRoutes:{path:'/routes/viewRoutes'}
     
 
 

@@ -2,19 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit, faRadiation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { baseurl, ProjectStatus, banknames,toi,tds,gst} from "../../api";
+import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
+import { baseurl, ProjectStatus, banknames, toi, tds, gst, companies } from "../../api";
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
 import { check } from '../../checkloggedin';
 import Multiselect from "../../components/Multiselect";
 import { useSelector, useDispatch } from 'react-redux';
 import { getcontacts, deleteContact } from '../../features/contactslice'
-import { getbill, disableBill } from '../../features/billslice'
+import { getbill, disableBill, fetchbillsafterdisable } from '../../features/billslice'
 import { getinvoice, disableinvoice } from '../../features/invoiceSlice'
 import '../../style.css'; // Import the CSS file where your styles are defined
 import { fetchProjects } from "../../features/projectslice";
@@ -42,11 +41,7 @@ export default () => {
   let [showModal, setShowModal] = useState(false);
 
   // Name
-  const [editconid, setEditconid] = useState("")
-  const [editName, setEditname] = useState("")
-  const [editphone, setEditphone] = useState("")
-  const [editemail, setEditemail] = useState("")
-  const [edittype, setEdittype] = useState("")
+
   let [editprojects, setEditProjects] = useState([])
 
 
@@ -64,8 +59,8 @@ export default () => {
   const [editSubject, setEditSubject] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editInvoice, setEditInvoice] = useState('');
-  const [edittds,setEdittds]=useState('')
-  const [editgst,setEditgst]=useState('')
+  const [edittds, setEdittds] = useState('')
+  const [editgst, setEditgst] = useState('')
 
 
 
@@ -78,15 +73,15 @@ export default () => {
   // project filtering
   let [companyname, setCompanyName] = useState('')
   let [isActive, setIsActive] = useState(null)
-  let [fgst,setgst]=useState('')
-  let [ftds,settds]=useState('')
+  let [fgst, setgst] = useState('')
+  let [ftds, settds] = useState('')
 
 
   // view task History
   const [history, setHistory] = useState([])
   const [taskthis, settaskthis] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
-  let [credittype,setcredittype]=useState('')
+  let [credittype, setcredittype] = useState('')
 
 
   // sort by created date
@@ -109,7 +104,7 @@ export default () => {
 
 
   let [invoice, setInvoice] = useState([])
-  const [bill, setBill] = useState([])
+  let [bill, setBill] = useState([])
   //for bills
   let [payment, setpayment] = useState(false)
   let [invoi, setinvoi] = useState(false)
@@ -117,54 +112,74 @@ export default () => {
   let [sum, setSum] = useState(0)
   let [conso, setconso] = useState([])
   let [currconso, setcurrconso] = useState({})
-  let [isDisabled,setisDisabled]=useState(false)
-
+  let [isDisabled, setisDisabled] = useState(false)
+  
 
   // filtering from Invoice,Bills
 
   useEffect(() => {
+    // console.log("hi")
     handleprojectFetch()
     handleinvoiceFetch()
     changeData(typebill)
-    dispatch(getbill(isDisabled))
+    dispatch(getbill()).then((data) => {
+
+      // for (let i = 0; i < data.length; i++) {
+      //   tempbills[i] = data[i]
+      // }
+      setBill(data)
+    })
     dispatch(getcontacts())
     dispatch(getConsolidated()).then((res) => {
       setconso(res)
     })
 
+    // setBill(tempbills)
+    // setBill(bills)
 
     // dispatch(getinvoice())
-    // ////////////console.log(contacts)
-    // ////////////console.log(bills)
-    // ////////////console.log(invoices)
+    // //////////////console.log(contacts)
+    // //////////////console.log(bills)
+    // //////////////console.log(invoices)
   }, [contacts.length, invoice.length, bills.length])
 
-  const seedisable=(value)=>{
-    isDisabled=value
-    dispatch(getbill(value)).then(data => {
-      bills = data
-    })
-
-  }
+  ////////////////////////////
+  //   const seedisable = (value) => {
+  //     // console.log(typebill)
+  //     if(typebill=="invoice"){
+  //       // console.log("hi")
+  //       console.log(invoice)
+  //     }
+  //     if(typebill=="bills"){
+  //     isDisabled = value
+  //     dispatch(getbill(value)).then(data => {
+  //       bills = data
+  //     })
+  //   }
+  // }
+  ////////////////////////////////
 
   useEffect(() => {
-    ////console.log(currconso)
+    //////console.log(currconso)
   }, [currconso])
 
   const changeData = (type) => {
-    //////////////console.log(type)
+    ////////////////console.log(type)
     if (type == "invoice") {
       setData(invoice)
+      handleFilter()
+
     }
     if (type == "bills") {
-      setData(bills)
+      setData(bill)
+      handleFilter()
     }
   }
   const findperson = (id) => {
-    // ////////////console.log(id)
+    // //////////////console.log(id)
     for (let i = 0; i < contacts.length; i++) {
       if (contacts[i]._id == id) {
-        // ////////////console.log(id,contacts[i]._id)
+        // //////////////console.log(id,contacts[i]._id)
         return contacts[i].name
       }
     }
@@ -184,7 +199,7 @@ export default () => {
       if (conso[i].project == pname) {
         setcurrconso(conso[i])
         currconso = conso[i]
-        ////console.log(currconso)
+        //////console.log(currconso)
         found = true
         // return
       }
@@ -196,31 +211,36 @@ export default () => {
 
 
     // .then((bill) => {
-    //   ////////////console.log(bill,"from then")
+    //   //////////////console.log(bill,"from then")
     if (typebill === "bills") {
+      // console.log(isDisableds.toString());
+      // console.log(bill,"from filter",isDisabled)
 
-      // sort bills alphabetically according to amount
-      ////console.log(bills, "bills")
-      tempdata = bills.filter(item =>
+      // Filter and sort bills based on various conditions, including the disabled state
+      tempdata = bill.filter((item) =>
         (companyname === "" || item.company === companyname) &&
         (pname === "" || item.project === pname) &&
         (people === "" || item.person === people) &&
-        (bank == "" || item.bank === bank)&&
-        (credittype== ""|| item.type===credittype)&&
-        (fgst==""||item.gst==fgst)&&
-        (ftds==""||item.tds==ftds))
-      
-      setData(tempdata)
+        (bank === "" || item.bank === bank) &&
+        (credittype === "" || item.type === credittype) &&
+        (fgst === "" || item.gst === fgst) &&
+        (ftds === "" || item.tds === ftds) &&
+        (isDisabled === "" || item.isDisabled === (isDisabled === "true"))
+      );
+      // console.log(tempdata,"tempdata")
+      setData(tempdata);
 
-      // let temp=dispatch(getbill())
+      // let temp = dispatch(getbill());
     }
+
     if (typebill == "invoice") {
-      ////console.log(invoice, "invoice")
+      //////console.log(invoice, "invoice")
       tempdata = invoice.filter(item =>
         (companyname === "" || item.company === companyname) &&
         (pname === "" || item.project === pname) &&
         (people === "" || item.person === people) &&
-        (credittype===""||item.type===credittype)
+        (credittype === "" || item.type === credittype) &&
+        isDisabled === "" || item.isDisabled === (isDisabled === "true")
 
       )
       setData(tempdata)
@@ -240,7 +260,7 @@ export default () => {
   const sortbycreatedby = () => {
     let temp = createdoption + 1
     setCreatedoption(temp)
-    //////////console.log(temp)
+    ////////////console.log(temp)
     if (temp == 3) {
       if (typebill == "bills") {
         // setData(bills)
@@ -256,7 +276,7 @@ export default () => {
     for (let i = 0; i < data.length; i++) {
       sortedData[i] = data[i]
     }
-    ////////////console.log(sortedData)
+    //////////////console.log(sortedData)
     if (temp == 1) {
       sortedData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       setData(sortedData)
@@ -270,23 +290,23 @@ export default () => {
 
 
   const handleprojectFetch = async () => {
-    //////////////////////console.log(companyname)
+    ////////////////////////console.log(companyname)
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // ////////console.log(resp)
+      // //////////console.log(resp)
     }).catch(error => {
 
     })
   }
   const findprojectname = (project) => {
-    ////////////////console.log(project,"Find project name")
-    // ////////////////////console.log(pnamearr)
+    //////////////////console.log(project,"Find project name")
+    // //////////////////////console.log(pnamearr)
     let str = ""
     for (let i = 0; i < pnamearr.length; i++) {
-      // ////////////////console.log(pnamearr[i])
+      // //////////////////console.log(pnamearr[i])
       if (pnamearr[i]._id == project) {
         str = str + "{" + pnamearr[i].name + "}"
         break
@@ -294,7 +314,7 @@ export default () => {
 
     }
     // for(let i=0;i<projects.length;i++){
-    ////////////////////console.log(projects[i])
+    //////////////////////console.log(projects[i])
     //     for(let j=0;j<pnamearr.length;j++){
     //   if(pnamearr[j]._id==projects[i]){
     //     str=str+"{"+pnamearr[j].name+"}"
@@ -309,15 +329,15 @@ export default () => {
     if (e) {
       e.preventDefault()
     }
-    ////////////////////console.log("hello")
+    //////////////////////console.log("hello")
     const body = {
       project: pname,
       type: type
     }
-    ////////////////////console.log(body)
+    //////////////////////console.log(body)
     try {
       const response = await axios.put(`${baseurl}/invoice/`, body);
-      // //////////console.log(response.data, "invoices")
+      // ////////////console.log(response.data, "invoices")
       setInvoice(response.data);
       return response.data
 
@@ -328,13 +348,13 @@ export default () => {
   };
 
   const handleEditModal = (item) => {
-    ////////////////////console.log(pnamearr)
-    //////////console.log(item)
+    //////////////////////console.log(pnamearr)
+    ////////////console.log(item)
     let temp = []
     let temppro = item.projects
-    //console.log(invoi,payment)
+    //////console.log(invoi,payment)
     if (typebill == 'bills') {
-      //////////console.log("hi from bills")
+      ////////////console.log("hi from bills")
       setbillid(item._id)
       seteditcreatedAt(item.createdAt);
       setEditAmount(item.amount);
@@ -351,7 +371,7 @@ export default () => {
       setEditgst(item.gst)
     }
     if (typebill == 'invoice') {
-      //////////console.log("hi from invoice")
+      ////////////console.log("hi from invoice")
       setinvoiceid(item._id)
       seteditcreatedAt(item.createdAt);
       setEditAmount(item.amount);
@@ -364,7 +384,7 @@ export default () => {
       seteditcredittype(item.type)
 
     }
-    ////////////////////console.log(temppro,pnamearr)
+    //////////////////////console.log(temppro,pnamearr)
     // for(let j=0;j<pnamearr.length;j++){
     //   if((temppro).includes(pnamearr[j]._id)){
     //     temp.push({
@@ -373,8 +393,8 @@ export default () => {
     //     })
     //   }
     // }
-    ////////////////////console.log(temp,"hi")
-    ////////////////console.log(item,"hi")
+    //////////////////////console.log(temp,"hi")
+    //////////////////console.log(item,"hi")
 
     setShowModal(true);
 
@@ -382,14 +402,14 @@ export default () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault()
-    // //////////console.log(selectedFiles[0],"hi")
-    // //////////console.log(typebill)
+    // ////////////console.log(selectedFiles[0],"hi")
+    // ////////////console.log(typebill)
     const uniqueUrlsSet = new Set(); // Create a Set to store unique URLs
 
-    ////////////console.log(selectedFiles,selectedFiles.length,'selectedFiles.length')
+    //////////////console.log(selectedFiles,selectedFiles.length,'selectedFiles.length')
     let urls = []
     for (let i = 0; i < selectedFiles.length; i++) {
-      // ////////////////////console.log("hi")
+      // //////////////////////console.log("hi")
       if (selectedFiles[i] != null) {
 
         let selectedFile = selectedFiles[i][2]
@@ -401,15 +421,15 @@ export default () => {
         }
 
         if (selectedFile != null) {
-          // //////////////console.log("hi",selectedFile)
+          // ////////////////console.log("hi",selectedFile)
           const reader = new FileReader();
           reader.onload = async (event) => {
             const fileContent = event.target.result;
             // urls.push(getPredefinedUrl(selectedFiles[i][1]))
             // Perform your upload logic here
             // For demonstration, let's just log the file extension and content
-            ////////////////////console.log('Selected File Extension:', fileExtension);
-            ////////////////////console.log('File Content:', fileContent);
+            //////////////////////console.log('Selected File Extension:', fileExtension);
+            //////////////////////console.log('File Content:', fileContent);
 
             try {
               // Example: Uploading file content using Fetch
@@ -456,10 +476,10 @@ export default () => {
         for (let i = 0; i < editUrls.length; i++) {
           temp[i] = editUrls[i]
         }
-        //console.log(temp,payment,invoi)
+        //////console.log(temp,payment,invoi)
         if (payment) {
           temp[0] = { file: uniqueUrls[0], name: "Payment Proof" }
-          //////////console.log(editUrls)
+          ////////////console.log(editUrls)
         }
         if (invoi) {
           if (uniqueUrls.length == 2) {
@@ -472,7 +492,7 @@ export default () => {
 
         // if(selectedFiles[0]!=undefined){
         //   editUrls[0]={file:uniqueUrls[0],name:"Payment Proof"}
-        //   //////////console.log(editUrls)
+        //   ////////////console.log(editUrls)
         // }
         // if(selectedFiles[1]!=undefined){
         //   if(uniqueUrls.length==2){
@@ -481,12 +501,12 @@ export default () => {
         //   else{
         //     editUrls[1]={file:uniqueUrls[0],name:"Tax Invoice"}
         //   }
-        //   //////////console.log(editUrls)
+        //   ////////////console.log(editUrls)
         // }
-        // //////////console.log(editUrls)
+        // ////////////console.log(editUrls)
 
 
-        ////////////console.log(uniqueUrlsObjects.length)
+        //////////////console.log(uniqueUrlsObjects.length)
         const body = {
           amount: editAmount,
           person: editPerson == '' ? undefined : editPerson,
@@ -497,15 +517,15 @@ export default () => {
           subject: editSubject,
           invoice: editInvoice == '' ? undefined : editInvoice,
           urls: temp,//new
-          previous:[],
+          previous: [],
           type: editcredittype,
           bank: editBank,
-          tds:edittds,
-          gst:editgst
+          tds: edittds,
+          gst: editgst
 
         };
 
-        //////////console.log(body)
+        ////////////console.log(body)
 
         const responseFormData = await axios.put(`${baseurl}/income/${editbillid}`, body);
         setSelectedFiles([])
@@ -513,19 +533,19 @@ export default () => {
           bills = data
         })
         // dispatch(getbill())
-        payment=false
-        invoi=false
+        payment = false
+        invoi = false
         setpayment(false)
         setinvoi(false)
         setTimeout(() => handleFilter(), 1000)
-        
+
       }
       if (typebill == "invoice") {
         const uniqueUrls = Array.from(uniqueUrlsSet);
-        //////////////console.log(uniqueUrls);
+        ////////////////console.log(uniqueUrls);
         const uniqueUrlsObjects = uniqueUrls.map(url => ({ file: url, name: "Proforma Invoice" }));
 
-        ////////////console.log(uniqueUrlsObjects.length)
+        //////////////console.log(uniqueUrlsObjects.length)
         const body = {
           amount: editAmount,
           person: editPerson == '' ? undefined : editPerson,
@@ -543,10 +563,11 @@ export default () => {
 
 
 
-        const responseFormData = await axios.put(`${baseurl}/invoice/${editinvoiceid}`, body);
+        await axios.put(`${baseurl}/invoice/${editinvoiceid}`, body);
+        console.log("tried")
         setSelectedFiles([])
         handleinvoiceFetch().then(data => {
-          //////////console.log(data)
+          ////////////console.log(data)
           invoice = data
         })
         // dispatch(getbill())
@@ -569,14 +590,14 @@ export default () => {
   };
 
   const handleCheckboxChange = () => {
-    ////console.log("here")
-    ////console.log(conso)
+    //////console.log("here")
+    //////console.log(conso)
     let found = false
     for (let i = 0; i < conso.length; i++) {
       if (conso[i].project == pname) {
         // setcurrconso(conso[i])
         currconso = conso[i]
-        ////console.log(currconso)
+        //////console.log(currconso)
         found = true
         // return
       }
@@ -609,7 +630,7 @@ export default () => {
   const handleFileChange = async (event, tp) => {
     const files = event.target.files;
     const newSelectedFiles = [];
-    //////////console.log(tp)
+    ////////////console.log(tp)
     for (let i = 0; i < files.length; i++) {
 
       const file = files[i];
@@ -638,7 +659,7 @@ export default () => {
 
 
     // Check the result
-    //////////console.log(selectedFiles);
+    ////////////console.log(selectedFiles);
   };
 
 
@@ -666,7 +687,7 @@ export default () => {
                 <InputGroup.Text></InputGroup.Text>
                 <Form.Select value={typebill} onChange={(e) => {
                   setTypebill(e.target.value);
-                  changeData(e.target.value);
+                  // changeData(e.target.value);
 
                 }}>
                   <option value="">Select Option</option>
@@ -677,19 +698,19 @@ export default () => {
             </Form.Group>
           </Col>
           <Col xs={12} md={4}>
-            <Form.Group id="cname" className="mb-4">
+            <Form.Group id="pname" className="mb-4">
               <Form.Label>Company Name</Form.Label>
               <InputGroup>
                 <InputGroup.Text></InputGroup.Text>
                 <Form.Select value={companyname} onChange={(e) => {
                   companyname = e.target.value
-                  setCompanyName(e.target.value);
-                  handleprojectFetch();
+                  setCompanyName(e.target.value)
+                  handleprojectFetch()
                 }}>
                   <option value="">Select Option</option>
-                  <option value="Neo">Neo Modern</option>
-                  <option value="BZ">BZ Consultants</option>
-                  <option value="PMC">PMC</option>
+                  {companies.map((option, index) => (
+                    <option key={index} value={option}>{option}</option>
+                  ))}
                 </Form.Select>
               </InputGroup>
             </Form.Group>
@@ -809,22 +830,23 @@ export default () => {
           </Col>
           {/* isDisabled */}
           <Col xs={12} md={4}>
-          {check()[1] == 'john_doe' ?(
-            <Form.Group id="people" className="mb-4">
-              <Form.Label>Is Disabled</Form.Label>
-              <InputGroup>
-                <InputGroup.Text></InputGroup.Text>
-                <Form.Select value={isDisabled} onChange={(e) => {
-                  setisDisabled(e.target.value)
-                  seedisable(e.target.value)
-                }}>
-                  {/* <option value="">Select Option</option> */}
-                  <option value={true}>True</option>
-                  <option value={false}>False</option>
+            {check()[1] == 'john_doe' ? (
+              <Form.Group id="people" className="mb-4">
+                <Form.Label>Is Disabled</Form.Label>
+                <InputGroup>
+                  <InputGroup.Text></InputGroup.Text>
+                  <Form.Select value={isDisabled} onChange={(e) => {
+                    console.log(e.target.value)
+                    setisDisabled(e.target.value)
+                    // seedisable(e.target.value)
+                  }}>
+                    {/* <option value="">Select Option</option> */}
+                    <option value={true}>True</option>
+                    <option value={false}>False</option>
 
-                </Form.Select>
-              </InputGroup>
-            </Form.Group>):(null)}
+                  </Form.Select>
+                </InputGroup>
+              </Form.Group>) : (null)}
           </Col>
           <Col xs={12} md={4} className="d-flex justify-content-center">
             <Button style={{ height: "70px" }} variant="primary" type="submit" className="w-100 mt-3">
@@ -924,7 +946,7 @@ export default () => {
                 <Table responsive className="align-items-center table-flush">
                   <thead className="thead-light">
                     <tr>
-                    <th scope="col" className="unselectable" style={{ cursor: "pointer" }} onClick={sortbycreatedby}>Created At</th>
+                      <th scope="col" className="unselectable" style={{ cursor: "pointer" }} onClick={sortbycreatedby}>Created At</th>
                       <th scope="col">InvoiceId</th>
                       <th scope="col">Type</th>
                       <th scope="col">Amount</th>
@@ -963,20 +985,34 @@ export default () => {
                             <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
                               <FontAwesomeIcon icon={faEdit} />
                             </Button>
-                            <Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => {
+                            {check()[1]=="john_doe" && (<Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => {
                               dispatch(disableinvoice(row._id))
-                              setTimeout(() => {
-                                handleinvoiceFetch().then(data => {
-                                  invoice = data
-                                })
-                              }, 2000)
-                              setTimeout(() => {
-                                handleFilter()
-                                toast.success("Succesfully Deleted")
-                              }, 2000)
+                              // console.log(invoice)
+                              for (let i = 0; i < invoice.length; i++) {
+                                if (invoice[i]._id === row._id) {
+                                  invoice[i].isDisabled = !invoice[i].isDisabled
+                                }
+                              }
+                              setInvoice(invoice)
+                              handleFilter()
+                              // setInvoice((prevInvoices) =>
+                              //     prevInvoices.map((invoice) =>
+                              //       invoice._id === row._id
+                              //   ? { ...invoice, isDisabled: !invoice.isDisabled }
+                              //   : invoice
+                              // )
+                              //  );
+                              // setTimeout(() => {
+                              //   handleinvoiceFetch().then(data => {
+                              //     invoice = data
+                              //   })
+                              // }, 2000)
+                              // setTimeout(() => {
+                              //   toast.success("Succesfully Deleted")
+                              // }, 2000)
                             }} variant="danger" size="sm">
                               <FontAwesomeIcon icon={faTrash} />
-                            </Button>
+                            </Button>)}
                           </td>
                         </tr>
                       ))
@@ -1063,23 +1099,42 @@ export default () => {
                           )}
                           <td>
                             <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
-                              <FontAwesomeIcon icon={faEdit} />
+                              <FontAwesomeIcon icon={faRadiation} />
                             </Button>
-                            <Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={(e) => {
-                              dispatch(disableBill(row._id))
-                              setTimeout(() => {
-                                dispatch(getbill()).then(data => {
-                                  bills = data
-                                })
-                              }, 1000)
-                              setTimeout(() => handleFilter(), 1000)
+                            {check()[1]=="john_doe" && (<Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={(e) => {
 
+                              let tempbills = bill.map(bill1 => ({ ...bill1 })); // Shallow copy each object in the array
+                              
+                              console.log("Before modification:", tempbills, bill);
+                              for (let i = 0; i < tempbills.length; i++) {
+                                if (tempbills[i]._id === row._id) {
+                                  tempbills[i].isDisabled = !tempbills[i].isDisabled; // Modify the copied object
+                                }
+                              }
+                              bill = tempbills; // Update the bill variable (if mutable)
+                              setBill(tempbills)
+                              console.log("After modification:", tempbills,bill);
+                              
+                              let filtered=tempbills.filter((item) =>
+                                  (companyname === "" || item.company === companyname) &&
+                                  (pname === "" || item.project === pname) &&
+                                  (people === "" || item.person === people) &&
+                                  (bank === "" || item.bank === bank) &&
+                                  (credittype === "" || item.type === credittype) &&
+                                  (fgst === "" || item.gst === fgst) &&
+                                  (ftds === "" || item.tds === ftds) &&
+                                  (isDisabled === "" || item.isDisabled === (isDisabled === "true"))
+                              )
+                              // console.log(filtered)
+                              setData(filtered)
+                              filtered=[]
+                              dispatch(disableBill(row._id))
                             }}
 
 
                               variant="danger" size="sm">
                               <FontAwesomeIcon icon={faTrash} />
-                            </Button>
+                            </Button>)}
                           </td>
                         </tr>
                       ))
@@ -1157,8 +1212,8 @@ export default () => {
                 ))}
               </Form.Select>
             </Form.Group>
-{/* Tds */}
-<Form.Group className="mb-3" controlId="editHeading">
+            {/* Tds */}
+            <Form.Group className="mb-3" controlId="editHeading">
               <Form.Label>TDS</Form.Label>
               <Form.Select value={edittds} onChange={(e) => setEdittds(e.target.value)}>
                 <option value="">Select Option</option>
@@ -1169,8 +1224,8 @@ export default () => {
               </Form.Select>
             </Form.Group>
 
-{/* Gst */}
-<Form.Group className="mb-3" controlId="editHeading">
+            {/* Gst */}
+            <Form.Group className="mb-3" controlId="editHeading">
               <Form.Label>GST</Form.Label>
               <Form.Select value={editgst} onChange={(e) => setEditgst(e.target.value)}>
                 <option value="">Select Option</option>

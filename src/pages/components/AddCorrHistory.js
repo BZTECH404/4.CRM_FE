@@ -15,13 +15,13 @@ export default ({corr,showModal2,setShowModal2}) => {
     let [filename,setfilename]=useState("")
 
     useEffect(()=>{
-        console.log(corr)
+        //////console.log(corr)
 
     },[])
 
     const handleaddhistorysubmit=async(e)=>{
       e.preventDefault()
-      // console.log("hi",selectedFiles[0][1])
+      // //////console.log("hi",selectedFiles[0][1])
       // Aws Upload
   
       if(selectedFiles.length!=0){
@@ -42,8 +42,8 @@ export default ({corr,showModal2,setShowModal2}) => {
             const fileContent = event.target.result;
             // Perform your upload logic here
             // For demonstration, let's just log the file extension and content
-            ////////////////////console.log('Selected File Extension:', fileExtension);
-            console.log('File Content:', fileContent);
+            //////////////////////console.log('Selected File Extension:', fileExtension);
+            //////console.log('File Content:', fileContent);
     
             try {
               // Example: Uploading file content using Fetch
@@ -59,7 +59,7 @@ export default ({corr,showModal2,setShowModal2}) => {
                 throw new Error('Network response was not ok');
               }
               // toast.success("File Uploaded Succesfully")
-              console.log('File uploaded successfully:');
+              //////console.log('File uploaded successfully:');
               Swal.fire({
                 title: 'Success!',
                 text: 'File uploaded successfully.',
@@ -90,11 +90,11 @@ export default ({corr,showModal2,setShowModal2}) => {
         file:selectedFiles.length!=0?getPredefinedUrl(selectedFiles[0][1]):null
 
       }
-      // console.log(body,corr)
+      // //////console.log(body,corr)
 
         try {
           const response = await axios.post(`${baseurl}/correspondence/node/${corr._id}`,body);
-          console.log(response.data);
+          //////console.log(response.data);
           
           toast.success("History Added Succesfully");
           setShowModal2(false);
@@ -127,7 +127,7 @@ export default ({corr,showModal2,setShowModal2}) => {
             newarr.push([arr1[0],arr1[1],file])
           }
           setStop(true)
-          console.log(newarr)
+          //////console.log(newarr)
           setSelectedFiles([...selectedFiles, ...newarr]);
         }
       };

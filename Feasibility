@@ -1,0 +1,1412 @@
+
+final 24/11/2024 Draggable + Row Height
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./App.css";
+
+function App() {
+  const [elements, setElements] = useState([]);
+  const [columnLabels, setColumnLabels] = useState(["Column 1", "Column 2", "Column 3"]);
+  const [isPreviewMode, setIsPreviewMode] = useState(false); // New state for toggling preview mode
+
+  const handleAddRow = () => {
+    setElements([
+      ...elements,
+      { id: Date.now(), content: Array(columnLabels.length).fill(""), merged: [], mergeInput: "" },
+    ]);
+  };
+
+  const handleRemoveRow = (id) => {
+    setElements(elements.filter((element) => element.id !== id));
+  };
+
+  const handleContentChange = (id, colIndex, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        const updatedContent = [...element.content];
+        updatedContent[colIndex] = value;
+        return { ...element, content: updatedContent };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+  };
+
+  const handleAddColumn = () => {
+    setColumnLabels([...columnLabels, `Column ${columnLabels.length + 1}`]);
+    setElements(
+      elements.map((element) => ({
+        ...element,
+        content: [...element.content, ""],
+      }))
+    );
+  };
+
+  const handleRemoveColumn = () => {
+    if (columnLabels.length > 1) {
+      setColumnLabels(columnLabels.slice(0, -1));
+      setElements(
+        elements.map((element) => ({
+          ...element,
+          content: element.content.slice(0, -1),
+        }))
+      );
+    }
+  };
+
+  const handleMergeColumns = (id, rangeInput) => {
+    const [start, end] = rangeInput.split("-").map((x) => parseInt(x, 10) - 1); // Convert to 0-based index
+    if (start >= 0 && end >= start && end < columnLabels.length) {
+      setElements(
+        elements.map((element) => {
+          if (element.id === id) {
+            const newMerged = [...element.merged, { start, end }];
+            return { ...element, merged: newMerged };
+          }
+          return element;
+        })
+      );
+    }
+  };
+
+  const handleMergeInputChange = (id, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        return { ...element, mergeInput: value };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const reorderedElements = Array.from(elements);
+    const [moved] = reorderedElements.splice(result.source.index, 1);
+    reorderedElements.splice(result.destination.index, 0, moved);
+    setElements(reorderedElements);
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode); // Toggle preview mode
+  };
+
+  return (
+    <div className="App">
+      <h1>Dynamic Table Generator</h1>
+      <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        {/* Left Control Panel */}
+        <div>
+          <h3>Controls</h3>
+          <button onClick={handleAddRow}>Add Row</button>
+          <button onClick={handleAddColumn}>Add Column</button>
+          <button onClick={handleRemoveColumn} disabled={columnLabels.length <= 1}>
+            Remove Column
+          </button>
+          <button onClick={togglePreviewMode}>
+            {isPreviewMode ? "Edit Mode" : "Preview Mode"} {/* Toggle button text */}
+          </button>
+        </div>
+
+        {/* Right Preview Panel */}
+        <div>
+          <h3>Preview</h3>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <table
+              border="1"
+              style={{
+                borderCollapse: "collapse",
+                width: "100%",
+                tableLayout: "fixed",
+              }}
+            >
+              <thead>
+                {!isPreviewMode && (
+                  <tr>
+                    <th>Row</th>
+                    {columnLabels.map((label, index) => (
+                      <th key={index}>{label}</th>
+                    ))}
+                    <th>Actions</th>
+                  </tr>
+                )}
+              </thead>
+              <Droppable droppableId="table-body">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {elements.map((element, index) => (
+                      <Draggable key={element.id} draggableId={String(element.id)} index={index}>
+                        {(provided) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            {!isPreviewMode && <td>{`Row ${index + 1}`}</td>} {/* Only show in edit mode */}
+                            {element.content.map((cell, colIndex) => {
+                              const merged = element.merged;
+                              const mergeRange = merged.find(
+                                (range) => colIndex >= range.start && colIndex <= range.end
+                              );
+                              if (mergeRange) {
+                                // If the column is merged, render a merged cell
+                                if (colIndex === mergeRange.start) {
+                                  const colspan = mergeRange.end - mergeRange.start + 1;
+                                  return (
+                                    <td key={colIndex} colSpan={colspan} style={{ width: "100%" }}>
+                                      {isPreviewMode ? (
+                                        <p>{cell}</p> // Display in preview mode as text
+                                      ) : (
+                                        <input
+                                          type="text"
+                                          value={cell}
+                                          onChange={(e) =>
+                                            handleContentChange(element.id, colIndex, e.target.value)
+                                          }
+                                          style={{ width: "100%" }}
+                                        />
+                                      )}
+                                    </td>
+                                  );
+                                }
+                                return null; // Skip rendering the cell part of the merge
+                              }
+
+                              return (
+                                <td key={colIndex}>
+                                  {isPreviewMode ? (
+                                    <p>{cell}</p> // Display as static text in preview mode
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={cell}
+                                      onChange={(e) =>
+                                        handleContentChange(element.id, colIndex, e.target.value)
+                                      }
+                                      style={{ width: "100%" }}
+                                    />
+                                  )}
+                                </td>
+                              );
+                            })}
+                            {!isPreviewMode && (
+                              <td>
+                                {/* Merge Input Box */}
+                                <input
+                                  type="text"
+                                  value={element.mergeInput}
+                                  onChange={(e) =>
+                                    handleMergeInputChange(element.id, e.target.value)
+                                  }
+                                  placeholder="e.g., 1-2"
+                                />
+                                <button onClick={() => handleMergeColumns(element.id, element.mergeInput)}>
+                                  Merge
+                                </button>
+                                <button onClick={() => handleRemoveRow(element.id)}>-</button>
+                              </td>
+                            )}
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+Last Draggable
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./App.css";
+
+function App() {
+  const [elements, setElements] = useState([]);
+  const [columnLabels, setColumnLabels] = useState(["Column 1", "Column 2", "Column 3"]);
+  const [isPreviewMode, setIsPreviewMode] = useState(false); // New state for toggling preview mode
+
+  const handleAddRow = () => {
+    setElements([
+      ...elements,
+      { id: Date.now(), content: Array(columnLabels.length).fill(""), merged: [], mergeInput: "" },
+    ]);
+  };
+
+  const handleRemoveRow = (id) => {
+    setElements(elements.filter((element) => element.id !== id));
+  };
+
+  const handleContentChange = (id, colIndex, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        const updatedContent = [...element.content];
+        updatedContent[colIndex] = value;
+        return { ...element, content: updatedContent };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+  };
+
+  const handleAddColumn = () => {
+    setColumnLabels([...columnLabels, `Column ${columnLabels.length + 1}`]);
+    setElements(
+      elements.map((element) => ({
+        ...element,
+        content: [...element.content, ""],
+      }))
+    );
+  };
+
+  const handleRemoveColumn = () => {
+    if (columnLabels.length > 1) {
+      setColumnLabels(columnLabels.slice(0, -1));
+      setElements(
+        elements.map((element) => ({
+          ...element,
+          content: element.content.slice(0, -1),
+        }))
+      );
+    }
+  };
+
+  const handleMergeColumns = (id, rangeInput) => {
+    const [start, end] = rangeInput.split("-").map((x) => parseInt(x, 10) - 1); // Convert to 0-based index
+    if (start >= 0 && end >= start && end < columnLabels.length) {
+      setElements(
+        elements.map((element) => {
+          if (element.id === id) {
+            const newMerged = [...element.merged, { start, end }];
+            return { ...element, merged: newMerged };
+          }
+          return element;
+        })
+      );
+    }
+  };
+
+  const handleMergeInputChange = (id, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        return { ...element, mergeInput: value };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const reorderedElements = Array.from(elements);
+    const [moved] = reorderedElements.splice(result.source.index, 1);
+    reorderedElements.splice(result.destination.index, 0, moved);
+    setElements(reorderedElements);
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode); // Toggle preview mode
+  };
+
+  return (
+    <div className="App">
+      <h1>Dynamic Table Generator</h1>
+      <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        {/* Left Control Panel */}
+        <div>
+          <h3>Controls</h3>
+          <button onClick={handleAddRow}>Add Row</button>
+          <button onClick={handleAddColumn}>Add Column</button>
+          <button onClick={handleRemoveColumn} disabled={columnLabels.length <= 1}>
+            Remove Column
+          </button>
+          <button onClick={togglePreviewMode}>
+            {isPreviewMode ? "Edit Mode" : "Preview Mode"} {/* Toggle button text */}
+          </button>
+        </div>
+
+        {/* Right Preview Panel */}
+        <div>
+          <h3>Preview</h3>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <table
+              border="1"
+              style={{
+                borderCollapse: "collapse",
+                width: "100%",
+                tableLayout: "fixed",
+              }}
+            >
+              <thead>
+                {!isPreviewMode && (
+                  <tr>
+                    <th>Row</th>
+                    {columnLabels.map((label, index) => (
+                      <th key={index}>{label}</th>
+                    ))}
+                    <th>Actions</th>
+                  </tr>
+                )}
+              </thead>
+              <Droppable droppableId="table-body">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {elements.map((element, index) => (
+                      <Draggable key={element.id} draggableId={String(element.id)} index={index}>
+                        {(provided) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            {!isPreviewMode && <td>{`Row ${index + 1}`}</td>} {/* Only show in edit mode */}
+                            {element.content.map((cell, colIndex) => {
+                              const merged = element.merged;
+                              const mergeRange = merged.find(
+                                (range) => colIndex >= range.start && colIndex <= range.end
+                              );
+                              if (mergeRange) {
+                                // If the column is merged, render a merged cell
+                                if (colIndex === mergeRange.start) {
+                                  const colspan = mergeRange.end - mergeRange.start + 1;
+                                  return (
+                                    <td key={colIndex} colSpan={colspan} style={{ width: "100%" }}>
+                                      {isPreviewMode ? (
+                                        <p>{cell}</p> // Display in preview mode as text
+                                      ) : (
+                                        <input
+                                          type="text"
+                                          value={cell}
+                                          onChange={(e) =>
+                                            handleContentChange(element.id, colIndex, e.target.value)
+                                          }
+                                          style={{ width: "100%" }}
+                                        />
+                                      )}
+                                    </td>
+                                  );
+                                }
+                                return null; // Skip rendering the cell part of the merge
+                              }
+
+                              return (
+                                <td key={colIndex}>
+                                  {isPreviewMode ? (
+                                    <p>{cell}</p> // Display as static text in preview mode
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={cell}
+                                      onChange={(e) =>
+                                        handleContentChange(element.id, colIndex, e.target.value)
+                                      }
+                                      style={{ width: "100%" }}
+                                    />
+                                  )}
+                                </td>
+                              );
+                            })}
+                            {!isPreviewMode && (
+                              <td>
+                                {/* Merge Input Box */}
+                                <input
+                                  type="text"
+                                  value={element.mergeInput}
+                                  onChange={(e) =>
+                                    handleMergeInputChange(element.id, e.target.value)
+                                  }
+                                  placeholder="e.g., 1-2"
+                                />
+                                <button onClick={() => handleMergeColumns(element.id, element.mergeInput)}>
+                                  Merge
+                                </button>
+                                <button onClick={() => handleRemoveRow(element.id)}>-</button>
+                              </td>
+                            )}
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+Relationships
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./App.css";
+
+function App() {
+  const [elements, setElements] = useState([]);
+  const [columnLabels, setColumnLabels] = useState(["Column 1", "Column 2", "Column 3"]);
+  const [relationships, setRelationships] = useState([]);
+  const [formulaInput, setFormulaInput] = useState("");
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [editFormula, setEditFormula] = useState(null); // Added state to handle editing a formula
+
+  const handleAddRow = () => {
+    setElements([
+      ...elements,
+      { id: Date.now(), content: Array(columnLabels.length).fill("") },
+    ]);
+  };
+
+  const handleRemoveRow = (id) => {
+    setElements(elements.filter((element) => element.id !== id));
+  };
+
+  const handleContentChange = (id, colIndex, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        const updatedContent = [...element.content];
+        updatedContent[colIndex] = value;
+        return { ...element, content: updatedContent };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+    recalculateDependentCells(id, colIndex, value);
+  };
+
+  const recalculateDependentCells = (rowId, colIndex, value) => {
+    const updatedElements = [...elements];
+    const sourceCell = { rowId, colIndex };
+
+    relationships.forEach((rel) => {
+      if (
+        (rel.source1.rowId === sourceCell.rowId && rel.source1.colIndex === sourceCell.colIndex) ||
+        (rel.source2?.rowId === sourceCell.rowId && rel.source2?.colIndex === sourceCell.colIndex)
+      ) {
+        const targetRow = updatedElements.find((el) => el.id === rel.target.rowId);
+        if (targetRow) {
+          const value1 = parseFloat(
+            updatedElements.find((el) => el.id === rel.source1.rowId)?.content[rel.source1.colIndex] || 0
+          );
+          const value2 = rel.source2
+            ? parseFloat(
+                updatedElements.find((el) => el.id === rel.source2.rowId)?.content[rel.source2.colIndex] || 0
+              )
+            : parseFloat(rel.constant2 || 0);
+
+          const result = rel.operation ? eval(`${value1} ${rel.operation} ${value2}`) : value1;
+          targetRow.content[rel.target.colIndex] = String(result);
+        }
+      }
+    });
+
+    setElements(updatedElements);
+  };
+
+  const addRelationship = (formula) => {
+    const regex =
+      /^\((\d+),(\d+)\)=(\((\d+),(\d+)\)|(\d+))([\+\-\*\/])?(\((\d+),(\d+)\)|(\d+))?$/;
+    const match = formula.match(regex);
+
+    if (match) {
+      const [
+        _,
+        targetRow,
+        targetCol,
+        source1,
+        s1Row,
+        s1Col,
+        constant1,
+        operation,
+        source2,
+        s2Row,
+        s2Col,
+        constant2,
+      ] = match;
+
+      const newRelationship = {
+        target: { rowId: elements[parseInt(targetRow, 10) - 1]?.id, colIndex: parseInt(targetCol, 10) - 1 },
+        source1: source1
+          ? { rowId: elements[parseInt(s1Row, 10) - 1]?.id, colIndex: parseInt(s1Col, 10) - 1 }
+          : null,
+        source2: source2
+          ? { rowId: elements[parseInt(s2Row, 10) - 1]?.id, colIndex: parseInt(s2Col, 10) - 1 }
+          : null,
+        constant1: constant1 || null,
+        constant2: constant2 || null,
+        operation: operation || null,
+      };
+
+      setRelationships([...relationships, newRelationship]);
+    } else {
+      alert("Invalid formula syntax. Example: (5,4)=(3,2) or (5,4)=(3,2)+(1,1)");
+    }
+  };
+
+  const handleEditRelationship = (index) => {
+    const relationship = relationships[index];
+    setEditFormula(
+      `(${elements.findIndex((el) => el.id === relationship.target.rowId) + 1},${
+        relationship.target.colIndex + 1
+      })=(${
+        elements.findIndex((el) => el.id === relationship.source1.rowId) + 1
+      },${relationship.source1.colIndex + 1})${
+        relationship.operation
+          ? ` ${relationship.operation} (${elements.findIndex((el) => el.id === relationship.source2?.rowId) + 1},${
+              relationship.source2?.colIndex + 1
+            })`
+          : ""
+      }`
+    );
+    // setEditFormulaIndex(index);
+  };
+
+  const handleDeleteRelationship = (index) => {
+    const updatedRelationships = relationships.filter((_, i) => i !== index);
+    setRelationships(updatedRelationships);
+  };
+
+  const handleUpdateRelationship = () => {
+    const updatedRelationships = [...relationships];
+    const regex =
+      /^\((\d+),(\d+)\)=(\((\d+),(\d+)\)|(\d+))([\+\-\*\/])?(\((\d+),(\d+)\)|(\d+))?$/;
+    const match = editFormula.match(regex);
+
+    if (match) {
+      const [
+        _,
+        targetRow,
+        targetCol,
+        source1,
+        s1Row,
+        s1Col,
+        constant1,
+        operation,
+        source2,
+        s2Row,
+        s2Col,
+        constant2,
+      ] = match;
+
+      updatedRelationships[editFormulaIndex] = {
+        target: { rowId: elements[parseInt(targetRow, 10) - 1]?.id, colIndex: parseInt(targetCol, 10) - 1 },
+        source1: source1
+          ? { rowId: elements[parseInt(s1Row, 10) - 1]?.id, colIndex: parseInt(s1Col, 10) - 1 }
+          : null,
+        source2: source2
+          ? { rowId: elements[parseInt(s2Row, 10) - 1]?.id, colIndex: parseInt(s2Col, 10) - 1 }
+          : null,
+        constant1: constant1 || null,
+        constant2: constant2 || null,
+        operation: operation || null,
+      };
+      setRelationships(updatedRelationships);
+      setEditFormula(null);
+    } else {
+      alert("Invalid formula syntax.");
+    }
+  };
+
+  const handleAddColumn = () => {
+    setColumnLabels([...columnLabels, `Column ${columnLabels.length + 1}`]);
+    setElements(
+      elements.map((element) => ({
+        ...element,
+        content: [...element.content, ""],
+      }))
+    );
+  };
+
+  const handleRemoveColumn = () => {
+    if (columnLabels.length > 1) {
+      setColumnLabels(columnLabels.slice(0, -1));
+      setElements(
+        elements.map((element) => ({
+          ...element,
+          content: element.content.slice(0, -1),
+        }))
+      );
+    }
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
+  return (
+    <div className="App">
+      <h1>Dynamic Table Generator</h1>
+      <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        <div>
+          <h3>Controls</h3>
+          <button onClick={handleAddRow}>Add Row</button>
+          <button onClick={handleAddColumn}>Add Column</button>
+          <button onClick={handleRemoveColumn} disabled={columnLabels.length <= 1}>
+            Remove Column
+          </button>
+          <button onClick={togglePreviewMode}>
+            {isPreviewMode ? "Edit Mode" : "Preview Mode"}
+          </button>
+
+          <div style={{ marginTop: "20px" }}>
+            <h4>Add Relationship</h4>
+            <input
+              placeholder="e.g., (5,4)=(3,2)"
+              value={formulaInput}
+              onChange={(e) => setFormulaInput(e.target.value)}
+            />
+            <button
+              onClick={() => {
+                addRelationship(formulaInput);
+                setFormulaInput("");
+              }}
+            >
+              Add Formula
+            </button>
+          </div>
+
+          <div>
+            <h4>Relationships</h4>
+            {relationships.map((rel, index) => (
+              <div key={index}>
+                <span>
+                  Target: ({elements.findIndex((el) => el.id === rel.target.rowId) + 1},{" "}
+                  {rel.target.colIndex + 1}) = ({elements.findIndex((el) => el.id === rel.source1.rowId) + 1},{" "}
+                  {rel.source1.colIndex + 1})
+                  {rel.operation
+                    ? ` ${rel.operation} (${elements.findIndex((el) => el.id === rel.source2?.rowId) + 1},${
+                        rel.source2?.colIndex + 1
+                      })`
+                    : ""}
+                </span>
+                <button onClick={() => handleEditRelationship(index)}>Edit</button>
+                <button onClick={() => handleDeleteRelationship(index)}>Delete</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3>Table</h3>
+          <DragDropContext onDragEnd={() => {}}>
+            <table border="1" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                {!isPreviewMode && (
+                  <tr>
+                    <th>Row</th>
+                    {columnLabels.map((label, index) => (
+                      <th key={index}>{label}</th>
+                    ))}
+                    <th>Actions</th>
+                  </tr>
+                )}
+              </thead>
+              <Droppable droppableId="table-body">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {elements.map((element, rowIndex) => (
+                      <Draggable key={element.id} draggableId={String(element.id)} index={rowIndex}>
+                        {(provided) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            {!isPreviewMode && <td>{`Row ${rowIndex + 1}`}</td>}
+                            {element.content.map((cell, colIndex) => (
+                              <td key={colIndex}>
+                                {isPreviewMode ? (
+                                  <p>{cell}</p>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={cell}
+                                    onChange={(e) =>
+                                      handleContentChange(element.id, colIndex, e.target.value)
+                                    }
+                                  />
+                                )}
+                              </td>
+                            ))}
+                            {!isPreviewMode && (
+                              <td>
+                                <button onClick={() => handleRemoveRow(element.id)}>-</button>
+                              </td>
+                            )}
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
+        </div>
+      </div>
+
+      {editFormula && (
+        <div>
+          <h4>Edit Formula</h4>
+          <input
+            type="text"
+            value={editFormula}
+            onChange={(e) => setEditFormula(e.target.value)}
+          />
+          <button onClick={handleUpdateRelationship}>Update Formula</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+Realtionshjjps 2
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./App.css";
+
+function App() {
+  const [elements, setElements] = useState([]);
+  const [columnLabels, setColumnLabels] = useState(["Column 1", "Column 2", "Column 3"]);
+  const [formulaInput, setFormulaInput] = useState("");
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [editFormula, setEditFormula] = useState(null); // Added state to handle editing a formula
+  const [editFormulaIndex, setEditFormulaIndex] = useState(null); // Track index for editing
+
+  const handleAddRow = () => {
+    setElements([
+      ...elements,
+      { id: Date.now(), content: Array(columnLabels.length).fill(""), relationships: [] },
+    ]);
+  };
+
+  const handleRemoveRow = (id) => {
+    setElements(elements.filter((element) => element.id !== id));
+  };
+
+  const handleContentChange = (id, colIndex, value) => {
+    const updatedElements = elements.map((element) => {
+      if (element.id === id) {
+        const updatedContent = [...element.content];
+        updatedContent[colIndex] = value;
+        return { ...element, content: updatedContent };
+      }
+      return element;
+    });
+    setElements(updatedElements);
+    recalculateDependentCells(id, colIndex, value);
+  };
+
+  const recalculateDependentCells = (rowId, colIndex, value) => {
+    const updatedElements = [...elements];
+    const sourceCell = { rowId, colIndex };
+
+    // Recalculate dependent cells based on relationships
+    updatedElements.forEach((element) => {
+      element.relationships.forEach((rel) => {
+        if (
+          (rel.source1.rowId === sourceCell.rowId && rel.source1.colIndex === sourceCell.colIndex) ||
+          (rel.source2?.rowId === sourceCell.rowId && rel.source2?.colIndex === sourceCell.colIndex)
+        ) {
+          const targetRow = updatedElements.find((el) => el.id === rel.target.rowId);
+          if (targetRow) {
+            const value1 = parseFloat(
+              updatedElements.find((el) => el.id === rel.source1.rowId)?.content[rel.source1.colIndex] || 0
+            );
+            const value2 = rel.source2
+              ? parseFloat(
+                  updatedElements.find((el) => el.id === rel.source2.rowId)?.content[rel.source2.colIndex] || 0
+                )
+              : parseFloat(rel.constant2 || 0);
+
+            const result = rel.operation ? eval(`${value1} ${rel.operation} ${value2}`) : value1;
+            targetRow.content[rel.target.colIndex] = String(result);
+          }
+        }
+      });
+    });
+
+    setElements(updatedElements);
+  };
+
+  const addRelationship = (formula) => {
+    const regex =
+      /^\((\d+),(\d+)\)=(\((\d+),(\d+)\)|(\d+))([\+\-\*\/])?(\((\d+),(\d+)\)|(\d+))?$/;
+    const match = formula.match(regex);
+
+    if (match) {
+      const [
+        _,
+        targetRow,
+        targetCol,
+        source1,
+        s1Row,
+        s1Col,
+        constant1,
+        operation,
+        source2,
+        s2Row,
+        s2Col,
+        constant2,
+      ] = match;
+
+      const newRelationship = {
+        target: { rowId: elements[parseInt(targetRow, 10) - 1]?.id, colIndex: parseInt(targetCol, 10) - 1 },
+        source1: source1
+          ? { rowId: elements[parseInt(s1Row, 10) - 1]?.id, colIndex: parseInt(s1Col, 10) - 1 }
+          : null,
+        source2: source2
+          ? { rowId: elements[parseInt(s2Row, 10) - 1]?.id, colIndex: parseInt(s2Col, 10) - 1 }
+          : null,
+        constant1: constant1 || null,
+        constant2: constant2 || null,
+        operation: operation || null,
+      };
+
+      const updatedElements = elements.map((el) =>
+        el.id === newRelationship.target.rowId
+          ? { ...el, relationships: [...el.relationships, newRelationship] }
+          : el
+      );
+
+      setElements(updatedElements);
+    } else {
+      alert("Invalid formula syntax. Example: (5,4)=(3,2) or (5,4)=(3,2)+(1,1)");
+    }
+  };
+
+  const handleEditRelationship = (rowId, index) => {
+    const relationship = elements.find((el) => el.id === rowId).relationships[index];
+    setEditFormula(
+      `(${elements.findIndex((el) => el.id === relationship.target.rowId) + 1},${
+        relationship.target.colIndex + 1
+      })=(${
+        elements.findIndex((el) => el.id === relationship.source1.rowId) + 1
+      },${relationship.source1.colIndex + 1})${
+        relationship.operation
+          ? ` ${relationship.operation} (${elements.findIndex((el) => el.id === relationship.source2?.rowId) + 1},${
+              relationship.source2?.colIndex + 1
+            })`
+          : ""
+      }`
+    );
+    setEditFormulaIndex(index);
+  };
+
+  const handleDeleteRelationship = (rowId, index) => {
+    const updatedElements = elements.map((el) => {
+      if (el.id === rowId) {
+        const updatedRelationships = el.relationships.filter((_, i) => i !== index);
+        return { ...el, relationships: updatedRelationships };
+      }
+      return el;
+    });
+    setElements(updatedElements);
+  };
+
+  const handleUpdateRelationship = () => {
+    const updatedElements = [...elements];
+    const regex =
+      /^\((\d+),(\d+)\)=(\((\d+),(\d+)\)|(\d+))([\+\-\*\/])?(\((\d+),(\d+)\)|(\d+))?$/;
+    const match = editFormula.match(regex);
+
+    if (match) {
+      const [
+        _,
+        targetRow,
+        targetCol,
+        source1,
+        s1Row,
+        s1Col,
+        constant1,
+        operation,
+        source2,
+        s2Row,
+        s2Col,
+        constant2,
+      ] = match;
+
+      updatedElements[editFormulaIndex] = {
+        target: { rowId: elements[parseInt(targetRow, 10) - 1]?.id, colIndex: parseInt(targetCol, 10) - 1 },
+        source1: source1
+          ? { rowId: elements[parseInt(s1Row, 10) - 1]?.id, colIndex: parseInt(s1Col, 10) - 1 }
+          : null,
+        source2: source2
+          ? { rowId: elements[parseInt(s2Row, 10) - 1]?.id, colIndex: parseInt(s2Col, 10) - 1 }
+          : null,
+        constant1: constant1 || null,
+        constant2: constant2 || null,
+        operation: operation || null,
+      };
+      setElements(updatedElements);
+      setEditFormula(null);
+    } else {
+      alert("Invalid formula syntax.");
+    }
+  };
+
+  const handleAddColumn = () => {
+    setColumnLabels([...columnLabels, `Column ${columnLabels.length + 1}`]);
+    setElements(
+      elements.map((element) => ({
+        ...element,
+        content: [...element.content, ""],
+      }))
+    );
+  };
+
+  const handleRemoveColumn = () => {
+    if (columnLabels.length > 1) {
+      setColumnLabels(columnLabels.slice(0, -1));
+      setElements(
+        elements.map((element) => ({
+          ...element,
+          content: element.content.slice(0, -1),
+        }))
+      );
+    }
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
+  return (
+    <div className="App">
+      <h1>Dynamic Table Generator</h1>
+      <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        <div>
+          <h3>Controls</h3>
+          <button onClick={handleAddRow}>Add Row</button>
+          <button onClick={handleAddColumn}>Add Column</button>
+          <button onClick={handleRemoveColumn} disabled={columnLabels.length <= 1}>
+            Remove Column
+          </button>
+          <button onClick={togglePreviewMode}>
+            {isPreviewMode ? "Edit Mode" : "Preview Mode"}
+          </button>
+
+          <div style={{ marginTop: "20px" }}>
+            <h4>Add Relationship</h4>
+            <input
+              placeholder="e.g. (1,1)=(2,2)+(3,3)"
+              value={formulaInput}
+              onChange={(e) => setFormulaInput(e.target.value)}
+            />
+            <button onClick={() => addRelationship(formulaInput)}>Add Formula</button>
+          </div>
+        </div>
+
+        <div>
+          <h3>Columns</h3>
+          {columnLabels.map((label, colIndex) => (
+            <div key={colIndex}>{label}</div>
+          ))}
+        </div>
+      </div>
+
+      <DragDropContext>
+        <Droppable droppableId="droppable">
+          {(provided) => (
+            <table {...provided.droppableProps} ref={provided.innerRef}>
+              <tbody>
+                {elements.map((row, rowIndex) => (
+                  <tr key={row.id}>
+                    {row.content.map((cellContent, colIndex) => (
+                      <td key={colIndex}>
+                        <input
+                          value={cellContent}
+                          onChange={(e) => handleContentChange(row.id, colIndex, e.target.value)}
+                          readOnly={isPreviewMode}
+                        />
+                      </td>
+                    ))}
+                    <td>
+                      <button onClick={() => handleRemoveRow(row.id)}>Remove Row</button>
+                    </td>
+                    <td>
+                      <button onClick={() => handleEditRelationship(row.id, editFormulaIndex)}>
+                        Edit Formula
+                      </button>
+                    </td>
+                    <td>
+                      <button onClick={() => handleDeleteRelationship(row.id, editFormulaIndex)}>
+                        Delete Formula
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Droppable>
+      </DragDropContext>
+
+      {editFormula && (
+        <div>
+          <h3>Edit Formula</h3>
+          <input
+            value={editFormula}
+            onChange={(e) => setEditFormula(e.target.value)}
+            placeholder="e.g. (1,1)=(2,2)+(3,3)"
+          />
+          <button onClick={handleUpdateRelationship}>Update Formula</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+
+
+// Color + Draggeable Working+ Font size + Font Color
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./App.css";
+
+function App() {
+  const [elements, setElements] = useState([{ pageNo: 1, rows: [], columns: ["Column 1", "Column 2", "Column 3"] }]);
+  const [activeTab, setActiveTab] = useState(0); // Track the active tab index
+  const [isPreviewMode, setIsPreviewMode] = useState(false); // State for toggle preview mode
+
+  // Function to add a regular row
+  const handleAddRow = () => {
+    const updatedElements = [...elements];
+    updatedElements[activeTab].rows.push({
+      id: Date.now(),
+      content: Array(updatedElements[activeTab].columns.length).fill(""),
+      type: "row",  // Normal row type
+      merged: [],
+      mergeInput: "",
+      rowColor: "#ffffff", // Default row color (white)
+      rowTextColor: "#000000", // Default text color (black)
+      rowTextSize: "16px", // Default text size (16px)
+    });
+    setElements(updatedElements);
+  };
+
+  // Function to handle row color change
+  const handleRowColorChange = (id, color) => {
+    const updatedElements = [...elements];
+    const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+    if (updatedRow) {
+      updatedRow.rowColor = color; // Update the row color
+    }
+    setElements(updatedElements);
+  };
+
+  // Function to handle text color change
+  const handleTextColorChange = (id, color) => {
+    const updatedElements = [...elements];
+    const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+    if (updatedRow) {
+      updatedRow.rowTextColor = color; // Update the text color
+    }
+    setElements(updatedElements);
+  };
+
+  // Function to handle text size change
+  const handleTextSizeChange = (id, size) => {
+    const updatedElements = [...elements];
+    const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+    if (updatedRow) {
+      updatedRow.rowTextSize = size + "px"; // Ensure the size includes the "px" unit
+    }
+    setElements(updatedElements);
+  };
+
+  const handleRemoveRow = (id) => {
+    const updatedElements = [...elements];
+    updatedElements[activeTab].rows = updatedElements[activeTab].rows.filter((row) => row.id !== id);
+    setElements(updatedElements);
+  };
+
+  const handleContentChange = (id, colIndex, value) => {
+    const updatedElements = [...elements];
+    const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+    if (updatedRow && updatedRow.type === "row") { // Only allow content change for normal rows
+      updatedRow.content[colIndex] = value;
+    }
+    setElements(updatedElements);
+  };
+
+  const handleAddColumn = () => {
+    const updatedElements = [...elements];
+    updatedElements[activeTab].columns.push(`Column ${updatedElements[activeTab].columns.length + 1}`);
+    updatedElements[activeTab].rows.forEach((row) => row.content.push(""));
+    setElements(updatedElements);
+  };
+
+  const handleRemoveColumn = () => {
+    if (elements[activeTab].columns.length > 1) {
+      const updatedElements = [...elements];
+      updatedElements[activeTab].columns.pop();
+      updatedElements[activeTab].rows.forEach((row) => row.content.pop());
+      setElements(updatedElements);
+    }
+  };
+
+  const handleMergeColumns = (id, rangeInput) => {
+    const [start, end] = rangeInput.split("-").map((x) => parseInt(x, 10) - 1); // Convert to 0-based index
+    if (start >= 0 && end >= start && end < elements[activeTab].columns.length) {
+      const updatedElements = [...elements];
+      const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+      if (updatedRow) {
+        updatedRow.merged.push({ start, end });
+      }
+      setElements(updatedElements);
+    }
+  };
+
+  const handleMergeInputChange = (id, value) => {
+    const updatedElements = [...elements];
+    const updatedRow = updatedElements[activeTab].rows.find((row) => row.id === id);
+    if (updatedRow) {
+      updatedRow.mergeInput = value;
+    }
+    setElements(updatedElements);
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const reorderedRows = [...elements[activeTab].rows];
+    const [moved] = reorderedRows.splice(result.source.index, 1);
+    reorderedRows.splice(result.destination.index, 0, moved);
+    const updatedElements = [...elements];
+    updatedElements[activeTab].rows = reorderedRows;
+    setElements(updatedElements);
+  };
+
+  const handleAddTab = () => {
+    const newTab = {
+      pageNo: elements.length + 1,
+      rows: [],
+      columns: ["Column 1", "Column 2", "Column 3"],
+    };
+    setElements([...elements, newTab]);
+  };
+
+  const switchTab = (index) => {
+    setActiveTab(index);
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode); // Toggle preview mode
+  };
+
+  return (
+    <div className="App">
+      <h1>Dynamic Table Generator</h1>
+
+      {/* Tab Controls */}
+      <div style={{ marginBottom: "20px" }}>
+        {elements.map((tab, index) => (
+          <button key={index} onClick={() => switchTab(index)}>
+            Page {tab.pageNo}
+          </button>
+        ))}
+        <button onClick={handleAddTab}>Add New Tab</button>
+      </div>
+
+      <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+        {/* Left Control Panel */}
+        <div>
+          <h3>Controls</h3>
+          <button onClick={handleAddRow}>Add Row</button>
+          <button onClick={handleAddColumn}>Add Column</button>
+          <button onClick={handleRemoveColumn} disabled={elements[activeTab].columns.length <= 1}>
+            Remove Column
+          </button>
+          <button onClick={togglePreviewMode}>
+            {isPreviewMode ? "Edit Mode" : "Preview Mode"} {/* Toggle button text */}
+          </button>
+        </div>
+
+        {/* Right Preview/Editing Panel */}
+        <div>
+          <h3>Page {elements[activeTab].pageNo}</h3>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <table
+              border="1"
+              style={{
+                borderCollapse: "collapse",
+                width: "100%",
+                tableLayout: "fixed",
+              }}
+            >
+              <thead>
+                {!isPreviewMode && (  // Only show row labels and column headers in edit mode
+                  <tr>
+                    <th>Row</th>
+                    {elements[activeTab].columns.map((label, index) => (
+                      <th key={index}>{label}</th>
+                    ))}
+                    <th>Actions</th>
+                  </tr>
+                )}
+              </thead>
+              <Droppable droppableId="table-body">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {elements[activeTab].rows.map((row, index) => (
+                      <Draggable key={row.id} draggableId={String(row.id)} index={index}>
+                        {(provided) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{ 
+                              backgroundColor: row.rowColor,  // Apply selected color to the row
+                              color: row.rowTextColor,  // Apply selected text color
+                            }}
+                          >
+                            {!isPreviewMode && <td>{`Row ${index + 1}`}</td>} {/* Only show in edit mode */}
+                            {row.type === "heading" ? (
+                              // If it's a heading row, display it as a heading
+                              row.content.map((content, colIndex) => (
+                                <td key={colIndex} colSpan={elements[activeTab].columns.length}>
+                                  <strong>{content}</strong>
+                                </td>
+                              ))
+                            ) : row.type === "space" ? (
+                              // If it's a space row, merge all columns
+                              <td
+                                colSpan={elements[activeTab].columns.length}
+                                style={{
+                                  textAlign: "center",
+                                  fontSize: row.rowTextSize, // Apply text size here in preview mode
+                                }}
+                              >
+                                Space
+                              </td>
+                            ) : (
+                              // Render normal rows
+                              row.content.map((cell, colIndex) => {
+                                const merged = row.merged;
+                                const mergeRange = merged.find(
+                                  (range) => colIndex >= range.start && colIndex <= range.end
+                                );
+                                if (mergeRange) {
+                                  if (colIndex === mergeRange.start) {
+                                    const colspan = mergeRange.end - mergeRange.start + 1;
+                                    return (
+                                      <td
+                                        key={colIndex}
+                                        colSpan={colspan}
+                                        style={{
+                                          // fontSize: isPreviewMode ? row.rowTextSize : "inherit", // Apply text size only in preview mode
+                                        }}
+                                      >
+                                        {isPreviewMode ? (
+                                          <p style={{fontSize: row.rowTextSize}}>{cell}</p> // Display as text in preview mode
+                                        ) : (
+                                          <input
+                                            type="text"
+                                            value={cell}
+                                            onChange={(e) =>
+                                              handleContentChange(row.id, colIndex, e.target.value)
+                                            }
+                                            style={{ width: "100%" }}
+                                          />
+                                        )}
+                                      </td>
+                                    );
+                                  }
+                                  return null; // Skip rendering merged cells
+                                }
+
+                                return (
+                                  <td
+                                    key={colIndex}
+                                    style={{
+                                      fontSize: isPreviewMode ? row.rowTextSize : "inherit", // Apply text size only in preview mode
+                                    }}
+                                  >
+                                    {isPreviewMode ? (
+                                      <p style={{fontSize: row.rowTextSize}} >{cell}</p> // Display as static text in preview mode
+                                    ) : (
+                                      <input
+                                        type="text"
+                                        value={cell}
+                                        onChange={(e) =>
+                                          handleContentChange(row.id, colIndex, e.target.value)
+                                        }
+                                        style={{ width: "100%" }}
+                                      />
+                                    )}
+                                  </td>
+                                );
+                              })
+                            )}
+
+                            {!isPreviewMode && (
+                              <td>
+                                {/* Row Color Picker */}
+                                <input
+                                  type="color"
+                                  value={row.rowColor}
+                                  onChange={(e) => handleRowColorChange(row.id, e.target.value)}
+                                />
+                                {/* Text Color Picker */}
+                                <input
+                                  type="color"
+                                  value={row.rowTextColor}
+                                  onChange={(e) => handleTextColorChange(row.id, e.target.value)}
+                                />
+                                {/* Text Size Picker */}
+                                <input
+                                  type="number"
+                                  value={parseInt(row.rowTextSize, 10)}
+                                  onChange={(e) => handleTextSizeChange(row.id, e.target.value)}
+                                  style={{ width: "60px" }}
+                                />
+                                {/* Merge Input Box */}
+                                <input
+                                  type="text"
+                                  value={row.mergeInput}
+                                  onChange={(e) => handleMergeInputChange(row.id, e.target.value)}
+                                  placeholder="e.g., 1-2"
+                                />
+                                <button onClick={() => handleMergeColumns(row.id, row.mergeInput)}>
+                                  Merge
+                                </button>
+                                <button onClick={() => handleRemoveRow(row.id)}>-</button>
+                              </td>
+                            )}
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+

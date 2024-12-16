@@ -5,18 +5,55 @@ import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fo
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import { baseurl,ProjectStatus,banknames,toi } from "../../api";
+import { baseurl, ProjectStatus, banknames, toi, companies } from "../../api";
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
 import { check } from '../../checkloggedin'
 import Multiselect from "../../components/Multiselect";
 import { useDispatch, useSelector } from "react-redux";
+import {  useParams } from 'react-router-dom';
 import { getcontacts } from "../../features/contactslice";
 import { getinvoice } from "../../features/invoiceSlice"
 import { fetchProjects } from "../../features/projectslice";
 
 
 export default () => {
+
+  // Checking Routes
+  const fullUrl = window.location.href;
+  // Get everything after the `#` (if present) or the pathname
+  const hashIndex = fullUrl.indexOf("#");
+  const relevantPath = hashIndex !== -1 ? fullUrl.slice(hashIndex + 1) : window.location.pathname;
+  // Split the path by `/`
+  const pathSegments = relevantPath.split("/");
+  const final=`/${pathSegments.slice(-2).join("/")}`
+  // for(let key in userpaths){
+  //   if(userpaths[key].path==final){
+  //     console.log(userpaths[key])
+  //     if(userpaths[key].isActive){
+
+  //     }
+  //     else{
+  //       return (<>Not allowed</>)
+  //     }
+  //   }
+  // }
+  const checkUserPath = async () => {
+    try {
+      // { path:final,userId:check()[0] }
+      let body={
+        final
+      }
+      const response = await axios.put(`${baseurl}/user/path/check`,body);
+      // console.log(response.data); // Handle response
+      // console.log("hi")
+    } catch (error) {
+      // console.log(error)
+      // console.error(error.response?.data || error.message); // Handle error
+    }
+  };
+  checkUserPath()
+
 
   const [imageUrl, setImageUrl] = useState(null);
 
@@ -56,23 +93,23 @@ export default () => {
   let [person, setPerson] = useState("")
   let [pname, setPname] = useState("")
   const [pnamearr, setPnamearr] = useState([])
-  const [invoice, setInvoice] = useState(null)
+  const [invoice, setInvoice] = useState("")
   const [selectedusers, setSelectedusers] = useState([])
   // for this create invoice only
   const [subject, setSubject] = useState(null)
   const [amount, setAmount] = useState(null)
   const [description, setDescription] = useState(null)
-  const [createdate,setCreateDate]=useState('')
+  const [createdate, setCreateDate] = useState('')
 
-  const [credittype,setcredittype]=useState(null)
-  const [bankaccount,setbankaccount]=useState(null)
-  
-  
-  
+  const [credittype, setcredittype] = useState(null)
+  const [bankaccount, setbankaccount] = useState(null)
+
+
+
   const dispatch = useDispatch()
   const { contacts, loading, error } = useSelector((state) => state.contact);
   const { invoices, loading1, error1 } = useSelector((state) => state.invoice)
-  let [invoices1,setInvoices]=useState([])
+  let [invoices1, setInvoices] = useState([])
   const token = localStorage.getItem('token');
 
 
@@ -85,14 +122,14 @@ export default () => {
   let [isActives, setIsActives] = useState(null)
 
 
- 
-  const [paymentproof,setPaymentproof]=useState(false)
-  const handleFileChange = async (event,tp) => {
+
+  const [paymentproof, setPaymentproof] = useState(false)
+  const handleFileChange = async (event, tp) => {
     const files = event.target.files;
     const newSelectedFiles = [];
-    //////////console.log(tp)
+    ////////////console.log(tp)
     for (let i = 0; i < files.length; i++) {
-      
+
       const file = files[i];
 
       if (file) {
@@ -107,21 +144,21 @@ export default () => {
         newSelectedFiles.push([arr1[0], arr1[1], file]);
       }
     }
-    if(tp=="Payment"){
-      selectedFiles[0]=newSelectedFiles[0]
+    if (tp == "Payment") {
+      selectedFiles[0] = newSelectedFiles[0]
     }
-    if(tp=="invoice"){
-      selectedFiles[1]=newSelectedFiles[0]
+    if (tp == "invoice") {
+      selectedFiles[1] = newSelectedFiles[0]
     }
     // else{
     // setSelectedFiles([...selectedFiles, ...newSelectedFiles]);
     // selectedFiles=[...selectedFiles, ...newSelectedFiles]
     // }
     // After the loop, update selectedFiles with the accumulated data
-    
+
 
     // Check the result
-    //////////console.log(selectedFiles);
+    ////////////console.log(selectedFiles);
   };
 
 
@@ -132,7 +169,7 @@ export default () => {
 
     let urls = []
     for (let i = 0; i < selectedFiles.length; i++) {
-      // ////////////////////console.log("hi")
+      // //////////////////////console.log("hi")
       let selectedFile = selectedFiles[i][2]
       const url = getPredefinedUrl(selectedFiles[i][1]);
 
@@ -142,15 +179,15 @@ export default () => {
       }
 
       if (selectedFile != null) {
-        // //////////////console.log("hi",selectedFile)
+        // ////////////////console.log("hi",selectedFile)
         const reader = new FileReader();
         reader.onload = async (event) => {
           const fileContent = event.target.result;
           // urls.push(getPredefinedUrl(selectedFiles[i][1]))
           // Perform your upload logic here
           // For demonstration, let's just log the file extension and content
-          ////////////////////console.log('Selected File Extension:', fileExtension);
-          ////////////////////console.log('File Content:', fileContent);
+          //////////////////////console.log('Selected File Extension:', fileExtension);
+          //////////////////////console.log('File Content:', fileContent);
 
           try {
             // Example: Uploading file content using Fetch
@@ -168,14 +205,15 @@ export default () => {
                 throw new Error('Network response was not ok');
               }
 
-            toast.success(`${selectedFiles[i][1]} uploaded succesfully`); // Call toast.success after successful addition
+              toast.success(`${selectedFiles[i][1]} uploaded succesfully`); // Call toast.success after successful addition
 
-            // Reload page after successful submission
-            // window.location.reload();
+              // Reload page after successful submission
+              // window.location.reload();
 
-            // Clear form data after submission
+              // Clear form data after submission
 
-          }} catch (error) {
+            }
+          } catch (error) {
             //console.error('Error:', error);
             toast.error('Failed to add image'); // Display error toast if addition fails
           }
@@ -187,14 +225,14 @@ export default () => {
 
     try {
       const uniqueUrls = Array.from(uniqueUrlsSet);
-      //////////////console.log(uniqueUrls);
-      let uniqueUrlsObjects=[]
-      if(uniqueUrls.length==1){
-        uniqueUrlsObjects.push({file:uniqueUrls[0],name:"Payment Proof"})
+      ////////////////console.log(uniqueUrls);
+      let uniqueUrlsObjects = []
+      if (uniqueUrls.length == 1) {
+        uniqueUrlsObjects.push({ file: uniqueUrls[0], name: "Payment Proof" })
       }
-      if(uniqueUrls.length==2){
-        uniqueUrlsObjects.push({file:uniqueUrls[0],name:"Payment Proof"})
-        uniqueUrlsObjects.push({file:uniqueUrls[1],name:"Tax Invoice"})
+      if (uniqueUrls.length == 2) {
+        uniqueUrlsObjects.push({ file: uniqueUrls[0], name: "Payment Proof" })
+        uniqueUrlsObjects.push({ file: uniqueUrls[1], name: "Tax Invoice" })
 
       }
       // const uniqueUrlsObjects = uniqueUrls.map(url => ({ file: url, name: "Payment Proof" }));
@@ -203,24 +241,24 @@ export default () => {
       const ids = selectedusers.map(user => user.id);
       const body = {
         amount: amount,
-        person:person==''?undefined:person,
-        createdAt:createdate,
-        company:companyname,
-        project:pname==''?undefined:pname,
+        person: person == '' ? undefined : person,
+        createdAt: createdate,
+        company: companyname,
+        project: pname == '' ? undefined : pname,
         description: description,
-        subject:subject,
-        invoice:invoice==''?undefined:invoice,
-        urls: uniqueUrlsObjects.length!=0 ? uniqueUrlsObjects : [],//new
-        type:credittype,
-        bank:bankaccount
+        subject: subject,
+        invoice: invoice == '' ? undefined : invoice,
+        urls: uniqueUrlsObjects.length != 0 ? uniqueUrlsObjects : [],//new
+        type: credittype,
+        bank: bankaccount
 
       };
-      // //console.log(body)
+      // //////console.log(body)
 
-     
-     
-      const responseFormData = await axios.post(`${baseurl}/income/create`,body);
-      ////////////////////console.log(responseFormData);
+
+
+      const responseFormData = await axios.post(`${baseurl}/income/create`, body);
+      //////////////////////console.log(responseFormData);
       toast.success('Bill added successfully'); // Call toast.success after successful addition
       // setPerson("");
       // setCompanyName("");
@@ -249,14 +287,14 @@ export default () => {
   ////////////////////////////////////////////
 
   const handleprojectFetch = async () => {
-    ////////////////////console.log(companyname)
+    //////////////////////console.log(companyname)
     dispatch(fetchProjects({
-      company:companyname?companyname:null,
-      status:isActive?isActive:null
-    })).then((resp)=>{
+      company: companyname ? companyname : null,
+      status: isActive ? isActive : null
+    })).then((resp) => {
       setPnamearr(resp)
-      // ////////console.log(resp)
-    }).catch(error=>{
+      // //////////console.log(resp)
+    }).catch(error => {
 
     })
 
@@ -265,7 +303,7 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-    ////////////////////console.log(check())
+    //////////////////////console.log(check())
     axios.get(`${baseurl}/user`)
       .then(response => {
         setUsers(response.data);
@@ -274,30 +312,30 @@ export default () => {
         //console.error(error);
       });
 
-
+    
     handleprojectFetch()
     dispatch(getcontacts())
     dispatch(getinvoice())
     setInvoices(invoices)
-    ////////////////console.log(contacts)
-    //////////console.log(invoices)
+    //////////////////console.log(contacts)
+    ////////////console.log(invoices)
   }, [contacts.length, invoices.length]);
 
 
 
-  const handleInvoiceFilter=()=>{
-    let temp=(invoices.filter((item)=>
-      (person==""||item.person==person)&&
-      (pname==""||item.project==pname)
-  ))
-    //////////console.log(person,invoices1)
+  const handleInvoiceFilter = () => {
+    let temp = (invoices.filter((item) =>
+      (person == "" || item.person == person) &&
+      (pname == "" || item.project == pname)
+    ))
+    ////////////console.log(person,invoices1)
     // for(let i=0;i<invoices1.length;i++){
     //   if(invoices1[i].person==pid){
-    //     //////////console.log(invoices1[i])
+    //     ////////////console.log(invoices1[i])
     //   }
     // }
-    // //////////console.log(invoices1,temp)
-      setInvoices(temp)
+    // ////////////console.log(invoices1,temp)
+    setInvoices(temp)
   }
 
 
@@ -314,7 +352,7 @@ export default () => {
       }
     })
       .then(response => {
-        ////////////////////console.log('Record deleted successfully:', response.data);
+        //////////////////////console.log('Record deleted successfully:', response.data);
         setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
       })
@@ -347,7 +385,7 @@ export default () => {
     setShowModal(false);
     setClickedImage(null);
   }
-  
+
 
 
   // redirect to projects page
@@ -393,7 +431,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
                           <Form.Select required value={person} onChange={(e) => {
-                            person=e.target.value
+                            person = e.target.value
                             setPerson(e.target.value)
                             handleInvoiceFilter()
                           }}>
@@ -417,9 +455,9 @@ export default () => {
                             handleprojectFetch()
                           }}>
                             <option value="">Select Option</option>
-                            <option value="Neo">Neo Modern</option>
-                            <option value="BZ">BZ Consultants</option>
-                            <option value="PMC">PMC</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
@@ -475,7 +513,7 @@ export default () => {
                             setIsActive(e.target.value)
                             handleprojectFetch()
                           }}>
-                             <option value="">Select Option</option>
+                            <option value="">Select Option</option>
                             {/* Mapping through the arr array to generate options */}
                             {ProjectStatus.map((option, index) => (
                               <option key={index} value={option}>{option}</option>
@@ -492,7 +530,7 @@ export default () => {
                           <InputGroup.Text>
                           </InputGroup.Text>
                           <Form.Select value={pname} onChange={(e) => {
-                            pname=e.target.value
+                            pname = e.target.value
                             setPname(e.target.value)
                             handleInvoiceFilter()
                           }}>
@@ -550,42 +588,44 @@ export default () => {
                             </InputGroup.Text>
                             <Form.Control
                               type="file"
-                              onChange={(e) => {handleFileChange(e,"Payment")
+                              onChange={(e) => {
+                                handleFileChange(e, "Payment")
                                 setPaymentproof(true)
                               }}
                               placeholder="Upload Image"
                             />
                           </InputGroup>
                         </Form.Group>
-                        
-{/* 
+
+                        {/* 
                           {selectedFiles.map((file)=>{
                             return (
                               <p>{file.name}</p>
                             )
                           })} */}
-                        
+
                       </Col>
-                      
-                    
+
+
                     ) : (null)
                     }
-                     <Col xs={12} md={6}>
-                      {paymentproof?( <Form.Group id="Project Image" className="mb-4">
-                          <Form.Label>Invoice</Form.Label>
-                          <InputGroup>
-                            <InputGroup.Text>
-                            </InputGroup.Text>
-                            <Form.Control
-                              type="file"
-                              onChange={(e) => {handleFileChange(e,"invoice")
-                              }}
-                              placeholder="Upload Image"
-                            />
-                          </InputGroup>
-                        </Form.Group>):(null)}
-                       
-                   </Col>
+                    <Col xs={12} md={6}>
+                      {paymentproof ? (<Form.Group id="Project Image" className="mb-4">
+                        <Form.Label>Invoice</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text>
+                          </InputGroup.Text>
+                          <Form.Control
+                            type="file"
+                            onChange={(e) => {
+                              handleFileChange(e, "invoice")
+                            }}
+                            placeholder="Upload Image"
+                          />
+                        </InputGroup>
+                      </Form.Group>) : (null)}
+
+                    </Col>
                     <Col xs={12} md={6}>
                       <Form.Group id="Taskdescription" className="mb-4">
                         <Form.Label>Invoice Description</Form.Label>
@@ -598,9 +638,13 @@ export default () => {
 
                     </Col>
                     <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
+                      {invoice==""?(<></>):(
+                      <>
                       <Button variant="primary" type="submit" className="w-100 mt-3">
                         Submit
                       </Button>
+                      </>
+                      )}
                     </Col>
                   </Row>
                 </form>

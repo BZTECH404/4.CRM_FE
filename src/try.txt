@@ -1,0 +1,237 @@
+ <Row>
+                <Col xs={12} className="mb-4" style={{ position: 'relative' }}>
+                  <h1> Today's Bucket</h1>
+
+                  {(() => {
+                    const loggedInUser = localStorage.getItem('username'); // Fetch the logged-in username from local storage
+                    if (!loggedInUser) {
+                      return <p>No user logged in.</p>;
+                    }
+                    const findprojectname = (id) => {
+                      ////////console.log(id, pnamearr)
+                      for (let i = 0; i < pnamearr.length; i++) {
+                        if (pnamearr[i]._id == id) {
+                          // ////////console.log(pnamearr[i].name)
+                          return pnamearr[i].name
+                        }
+                      }
+                    }
+
+                    return (
+                      <>
+                        {isDatePickerOpen && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              zIndex: 999,
+                              backgroundColor: 'white', // Ensure it's visible over the table
+                              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Optional shadow for better visibility
+                              padding: '10px', // Optional padding
+                              borderRadius: '5px', // Optional rounded corners
+                            }}
+                          >
+                            <DatePicker
+                              selected={selectedDate}
+                              onChange={(date) => {
+                                setSelectedDate(date); // Update the selected date
+                                setDatePickerOpen(false); // Close the date picker after selecting a date
+                              }}
+                              inline
+                              dateFormat="yyyy/MM/dd"
+                              onClickOutside={() => setDatePickerOpen(false)} // Close on outside click
+                            />
+                          </div>
+                        )}
+                        {/* <Table striped bordered hover> */}
+                        <Table >
+                          <thead>
+                            <tr>
+
+                              <th onClick={() => setDatePickerOpen(!isDatePickerOpen)} style={{ cursor: 'pointer' }}>Date</th>
+                              <th>Project</th>
+                              <th>Task Subject</th>
+                              <th>Task Description</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredBuckets.length === 0 ? (
+                              <tr>
+                                <td >No data available</td>
+                              </tr>
+                            ) : (
+                              filteredBuckets
+                                .filter(bucket => bucket.user.username === username) // Filter by username from localStorage
+                                .map(bucket => (
+                                  bucket.tasks.length === 0 ? (
+                                    <tr key={bucket._id}>
+                                      {/* <td>{bucket._id}</td> */}
+                                      {/* <td>{formatDate(bucket.date)}</td> */}
+                                      {/* <td>{bucket.user.username}</td>  */}
+
+                                    </tr>
+                                  ) : (
+                                    bucket.tasks.map(task => (
+                                      <tr key={task._id}>
+                                        {/* <td>{bucket._id}</td> */}
+
+                                        <td colSpan={1} style={{ width: "30px" }}>{formatDate(bucket.date)}</td>
+                                        <td scope="col">{findprojectname(task.projectid)}</td>
+                                        <td scope="col">{task.taskSubject}</td>
+                                        <td scope="col" style={{ whiteSpace: "pre-wrap", width: "30%" }}>{task.taskDescription}</td>
+                                        <td>
+                                          <Button variant="danger" className="me-2" onClick={() => handleDeleteTask(task._id)} >
+                                            Delete
+                                          </Button>
+                                          <Button
+                                            style={{ color: "grey" }}
+                                            onClick={() => {
+                                              handleComplete(task._id, task.taskCompleted)
+                                              switchstatus(bucket, task._id)
+                                              ////////console.log(task.taskCompleted)
+                                            }}
+                                          >
+                                            {task.taskCompleted ? "Mark Incomplete" : "Mark Complete"}
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )
+                                ))
+                            )}
+                          </tbody>
+                        </Table>
+                      </>
+                    );
+                  })()}
+                </Col>
+              </Row>
+
+
+
+
+               <Card.Header>
+                        <Row className="align-items-center">
+                          {
+                            existingquestion.map((option, index) => {
+                              const questionText = findQuestion(option.question);
+                              const answerType = findQuestionType(option.question);
+                              let tempfile;
+
+                              if (answerType === "Link") {
+                                tempfile = option.answer ? findfile(option.answer) : null;
+                              }
+
+                              return (
+                                <React.Fragment key={index}>
+                                  {questionText && <p style={{ border: "1px solid grey" }} >{questionText}</p>}
+
+                                  {editmode ? (
+                                    answerType === "Text" ? (
+                                      <>
+                                        <Form.Control
+                                          as="textarea"
+                                          value={option.answer}
+                                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                                        />
+                                        <Form.Select
+                                          required
+                                          value=""
+                                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                                        >
+                                          {option.prevanswer.map((prevOption, idx) => (
+                                            <option key={idx} value={prevOption}>{prevOption}</option>
+                                          ))}
+                                        </Form.Select>
+                                      </>
+                                    ) : (
+                                     <>
+                                        {questionText && (
+                                          <>
+                                          <a href={tempfile?.current} style={{ color: "blue", textDecoration: "underline" }}>
+                                          {tempfile?.filename || "File not found"}
+                                        </a>
+                                        
+                                        <Form.Select
+                                          required
+                                          value=""
+                                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                                        >
+                                          <option value="">Select File</option>
+                                          {files.map((file, idx) => (
+                                            <option key={idx} value={file._id}>{file.filename}</option>
+                                          ))}
+                                        </Form.Select>
+                                        <Form.Select
+                                          required
+                                          value=""
+                                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                                        >
+                                          {option.prevanswer.map((prevOption, idx) => (
+                                            <option key={idx} value={prevOption}>{prevOption}</option>
+                                          ))}
+                                        </Form.Select>
+                                      </>
+                                      )}
+                                      </>
+                                    )
+                                  ) : (
+                                    answerType === "Text" ? (
+                                      <pre style={{ whiteSpace: "pre-wrap" }}>{option.answer}</pre>
+
+                                    ) : (
+                                      questionText && (
+                                        <a href={tempfile?.current} style={{ color: "blue", textDecoration: "underline" }}>
+                                          {tempfile?.filename || "File not found"}
+                                        </a>
+                                      )
+                                    )
+                                  )}
+                                </React.Fragment>
+                              );
+                            })
+                          }
+
+
+
+                          <Col className="text-end">
+                            <Button variant="secondary" size="sm" onClick={handleEditSubmit}>Submit</Button>
+                          </Col>
+                        </Row>
+                      </Card.Header>
+
+
+                               <Table responsive style={{ width: "maxWidth" }} className="align-items-center table-flush">
+                        <thead className="thead-light">
+                          <tr>
+                            {/* <th scope="col">#</th> */}
+                            <th scope="col">Order</th>
+                            <th scope="col">Type</th>
+                            <th scope="col" colSpan={7}>Question</th>
+                            <th scope="col">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {question.map((row, index) => (
+                            <tr key={index}>
+                              {/* <td>{index + 1}</td> */}
+                              <td>{editmode ? (
+                                <Form.Control className="w-20" type="textarea" value={row.order}
+                                  onChange={(e) => //console.log(e)}
+                                />
+                              ) : (<p>{row.order}</p>)}</td>
+                              <td scope="col">{row.type}</td>
+                              <td scope="col" colSpan={7}>{row.question}</td>
+
+                              <td>
+                                <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
+                                  <FontAwesomeIcon icon={faEdit} />
+                                </Button>
+                                <Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => handleDelete(row._id)} variant="danger" size="sm">
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </Button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+
+                      </Table>

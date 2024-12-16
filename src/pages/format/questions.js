@@ -22,7 +22,7 @@ export default () => {
   const [imageUrl, setImageUrl] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [clickedImage, setClickedImage] = useState(null);
+  const [type, settype] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [data, setData] = useState([]);
   const [editMode, setEditMode] = useState(false);
@@ -107,14 +107,15 @@ export default () => {
 
     try {
       const body = {
-        question: description
+        question: description,
+        type: type
       };
       const responseFormData = await axios.post(`${baseurl}/question/create`, body);
-      //////console.log(responseFormData);
+      ////////console.log(responseFormData);
       toast.success('Question Added successfully'); // Call toast.success after successful addition
       axios.get(`${baseurl}/question`)
         .then(response => {
-          //console.log(response.data)
+          //////console.log(response.data)
           setQuestions(response.data)
         })
       setDescription('')
@@ -132,29 +133,31 @@ export default () => {
   ////////////////////////////////////////////
 
   const handleprojectFetch = async () => {
-    ////////////////////console.log(companyname)
+    //////////////////////console.log(companyname)
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // ////////console.log(resp)
+      // //////////console.log(resp)
     }).catch(error => {
 
     })
 
   }
 
-
+  const sortbyorder = () => {
+    let arr = questions
+    //console.log(questions)
+    arr.sort((a, b) => a.order - b.order);
+    setQuestions(arr)
+  }
   useEffect(() => {
-    ////////////////////console.log(check())
+    //////////////////////console.log(check())
     axios.get(`${baseurl}/question`)
       .then(response => {
-        // console.log(response.data)
-        // let arr = response.data
-        // arr.sort((a, b) => a.order - b.order);
-        // console.log(response.data)
-        setQuestions(response.data)
+        questions = response.data
+        sortbyorder()
       })
       .catch(error => {
         //console.error(error);
@@ -165,14 +168,14 @@ export default () => {
     // dispatch(getcontacts())
     // dispatch(getinvoice())
     dispatch(getConsolidated()).then((res) => {
-      ////console.log(res)
+      //////console.log(res)
       setConso(res)
     }).catch(err => {
-      ////console.log(err)
+      //////console.log(err)
     })
     setInvoices(invoices)
-    ////////////////console.log(contacts)
-    //////////console.log(invoices)
+    //////////////////console.log(contacts)
+    ////////////console.log(invoices)
   }, [contacts.length, invoices.length]);
 
 
@@ -180,14 +183,14 @@ export default () => {
     let body = {
       isDisabled: isd
     }
-    //console.log(body)
+    //////console.log(body)
     axios.put(`${baseurl}/question/`, body)
       .then(response => {
-        //console.log(response.data)
+        //////console.log(response.data)
         // let arr = response.data
         // arr.sort((a, b) => a.order - b.order);
         setQuestions(response.data)
-        
+
       })
       .catch(error => {
         //console.error(error);
@@ -202,14 +205,14 @@ export default () => {
   const handleDelete = (id) => {
     const token = localStorage.getItem('token');
 
-    //console.log("here",id)
+    //////console.log("here",id)
     axios.delete(`${baseurl}/question/${id}`, {
       headers: {
         Authorization: `${token}`
       }
     })
       .then(response => {
-        ////////////////////console.log('Record deleted successfully:', response.data);
+        //////////////////////console.log('Record deleted successfully:', response.data);
         // setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
       })
@@ -225,7 +228,7 @@ export default () => {
   const changeorder = (id, value) => {
     try {
 
-      console.log(id, value)
+      //////console.log(id, value)
     } catch (err) {
 
     }
@@ -233,11 +236,11 @@ export default () => {
   }
 
   const findprojectname = (project) => {
-    ////////////////console.log(project,"Find project name")
-    // ////////////////////console.log(pnamearr)
+    //////////////////console.log(project,"Find project name")
+    // //////////////////////console.log(pnamearr)
     let str = ""
     for (let i = 0; i < pnamearr.length; i++) {
-      // ////////////////console.log(pnamearr[i])
+      // //////////////////console.log(pnamearr[i])
       if (pnamearr[i]._id == project) {
         str = str + "{" + pnamearr[i].name + "}"
         break
@@ -245,7 +248,7 @@ export default () => {
 
     }
     // for(let i=0;i<projects.length;i++){
-    ////////////////////console.log(projects[i])
+    //////////////////////console.log(projects[i])
     //     for(let j=0;j<pnamearr.length;j++){
     //   if(pnamearr[j]._id==projects[i]){
     //     str=str+"{"+pnamearr[j].name+"}"
@@ -258,9 +261,10 @@ export default () => {
   // https://officecrm560.s3.ap-south-1.amazonaws.com/Imtiaz+Bandra++41./Lucky+Realty+Bandra1717420102462.xlsx
   // https://officecrm560.s3.ap-south-1.amazonaws.com/Imtiaz+Bandra++41./Lucky+Realty+Bandra1717419135299.xlsx
   const handleEditModal = (item) => {
-    //console.log(item)
+    //////console.log(item)
     setid(item._id)
     setEditDescription(item.question)
+    settype(item.type)
     setShowModal(true);
     setEditMode(true); // Set editMode to true when opening the edit modal
   }
@@ -275,21 +279,22 @@ export default () => {
       const ids = selectedusers.map(user => user.id);
       const body = {
         question: editDescription,
+        type: type
 
       };
-      ////console.log(body)
+      //////console.log(body)
 
 
 
       const responseFormData = await axios.put(`${baseurl}/question/${id}`, body);
-      //////console.log(responseFormData);
+      ////////console.log(responseFormData);
       toast.success('Edited successfully'); // Call toast.success after successful addition
       axios.get(`${baseurl}/question`)
         .then(response => {
-          // let sorted=response.data
-          // response.sort((a, b) => a.data.order - b.data.order);
-          // console.log(response)
-          setQuestions(response.data)
+          questions = response.data
+          let arr = questions
+          arr.sort((a, b) => a.order - b.order);
+          setQuestions(arr)
         })
         .catch(error => {
           //console.error(error);
@@ -306,7 +311,10 @@ export default () => {
     }
   }
   const handleEditOrder = async (id, order) => {
-
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((question) =>
+        question._id === id ? { ...question, order: order } : question
+      ));
 
     try {
 
@@ -316,22 +324,24 @@ export default () => {
         order: order,
 
       };
-      ////console.log(body)
+      //////console.log(body)
 
 
 
       const responseFormData = await axios.put(`${baseurl}/question/${id}`, body);
-      //////console.log(responseFormData);
+      ////////console.log(responseFormData);
       toast.success('Edited successfully'); // Call toast.success after successful addition
-      axios.get(`${baseurl}/question`)
-        .then(response => {
+      // axios.get(`${baseurl}/question`)
+      //   .then(response => {
+      //     let arr = response.data
+      //     //console.log(questions)
+      //     arr.sort((a, b) => a.order - b.order);
+      //     setQuestions(arr)
 
-          setQuestions(response.data)
-
-        })
-        .catch(error => {
-          //console.error(error);
-        })
+      //   })
+      //   .catch(error => {
+      //     //console.error(error);
+      //   })
 
 
       setShowModal(false)
@@ -349,11 +359,11 @@ export default () => {
   let endIndex = (currentPage + 1) * itemsPerPage;
   let currentItems = data.slice(startIndex, endIndex);
 
-const checkon=(e,id)=>{
-  e.preventDefault()
-  // set
-  console.log(id)
-}
+  const checkon = (e, id) => {
+    e.preventDefault()
+    // set
+    //////console.log(id)
+  }
   return (
     <>
       <ToastContainer />
@@ -394,7 +404,20 @@ const checkon=(e,id)=>{
                       <textarea rows="4" cols="60" type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
                     </Col>
                     <Col xs={12} md={6}>
+                      <Form.Group id="pname" className="mb-4">
+                        <Form.Label>Link/Text</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text></InputGroup.Text>
+                          <Form.Select value={type} onChange={(e) => {
+                            settype(e.target.value)
+                          }}>
+                            <option value="">Select Option</option>
+                            <option value="Text">Text</option>
+                            <option value="Link">Link</option>
 
+                          </Form.Select>
+                        </InputGroup>
+                      </Form.Group>
                     </Col>
                     <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
                       <Button style={{ height: "100px" }} variant="primary" type="submit" className="w-100 mt-3">
@@ -432,31 +455,41 @@ const checkon=(e,id)=>{
 
               </Row>
               <Button variant="secondary" style={{ width: "60px" }} size="sm" onClick={(e) => seteditmode(true)}>Edit</Button>
+              <Button variant="secondary" style={{ width: "80px" }} size="sm" onClick={(e) => sortbyorder()}>Sort By Order</Button>
               {editmode ? (<Button variant="secondary" style={{ width: "80px" }} size="sm" onClick={(e) => {
                 seteditmode(false)
-                fetchquestions(false)
+                axios.get(`${baseurl}/question`)
+                  .then(response => {
+                    questions = response.data
+                    let arr = questions
+                    arr.sort((a, b) => a.order - b.order);
+                    setQuestions(arr)
+                  })
+                  .catch(error => {
+                    //console.error(error);
+                  });
               }}>Submit</Button>) : (null)}
 
               <Table responsive style={{ width: "maxWidth" }} className="align-items-center table-flush">
                 <thead className="thead-light">
                   <tr>
-                  <th scope="col">#</th>
+                    {/* <th scope="col">#</th> */}
                     <th scope="col">Order</th>
+                    <th scope="col">Type</th>
                     <th scope="col" colSpan={7}>Question</th>
-
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {questions.map((row, index) => (
                     <tr key={index}>
-                      <td>{index+1}</td>
+                      {/* <td>{index + 1}</td> */}
                       <td>{editmode ? (
                         <Form.Control className="w-20" type="textarea" value={row.order}
-                        onClick={e=>checkon(e,row._id)}
-                         onChange={(e) => handleEditOrder(row._id, e.target.value)} 
+                          onChange={(e) => handleEditOrder(row._id, e.target.value)}
                         />
                       ) : (<p>{row.order}</p>)}</td>
+                      <td scope="col">{row.type}</td>
                       <td scope="col" colSpan={7}>{row.question}</td>
 
                       <td>
@@ -484,7 +517,24 @@ const checkon=(e,id)=>{
             <Form.Label>Question</Form.Label>
           </Form.Group>
           <textarea rows="4" cols="50" type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+
+          <Form.Group id="pname" className="mb-4">
+            <Form.Label>Link/Text</Form.Label>
+            <InputGroup>
+              <InputGroup.Text></InputGroup.Text>
+              <Form.Select value={type} onChange={(e) => {
+                settype(e.target.value)
+              }}>
+                <option value="">Select Option</option>
+                <option value="Text">Text</option>
+                <option value="Link">Link</option>
+
+              </Form.Select>
+            </InputGroup>
+          </Form.Group>
+
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel

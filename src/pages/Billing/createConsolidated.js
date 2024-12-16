@@ -5,10 +5,10 @@ import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fo
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import { baseurl, ProjectStatus, banknames, types, Agency } from "../../api";
+import { baseurl, ProjectStatus, banknames, types, Agency, companies } from "../../api";
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
-import { check } from '../../checkloggedin'
+import { check,geturl } from '../../checkloggedin'
 import Multiselect from "../../components/Multiselect";
 import { useDispatch, useSelector } from "react-redux";
 import { getcontacts } from "../../features/contactslice";
@@ -98,14 +98,14 @@ export default () => {
   let [edittype, setEdittype] = useState('')
   let [editDescription, setEditDescription] = useState('')
   let [previous, setPrevious] = useState([])
-  
+
 
 
 
   const handleFileChange = async (event, tp) => {
     const files = event.target.files;
     const newSelectedFiles = [];
-    //////////console.log(tp)
+    ////////////console.log(tp)
     for (let i = 0; i < files.length; i++) {
 
       const file = files[i];
@@ -125,12 +125,12 @@ export default () => {
     if (tp == "Calculation") {
       selectedFiles[0] = newSelectedFiles[0]
     }
-    //console.log(selectedFiles)
+    //////console.log(selectedFiles)
   };
   // const handleEditFileChange = async (event, tp) => {
   //   const files = event.target.files;
   //   const newSelectedFiles = [];
-  //   //////////console.log(tp)
+  //   ////////////console.log(tp)
   //   for (let i = 0; i < files.length; i++) {
 
   //     const file = files[i];
@@ -142,7 +142,7 @@ export default () => {
   //       setFileExtension(fileExtension);
   //       const projectobj = pnamearr.find(proj => proj._id == editProject);
   //       triggerFunction(fileExtension, projectobj.name).then((res)=>{
-  //         //console.log(res)
+  //         //////console.log(res)
   //       })
 
   //       // Add arr1[0] and arr1[1] to the newSelectedFiles array
@@ -151,7 +151,7 @@ export default () => {
   //   }
   //   // if (tp == "Calculation") {
   //   //   selectedFiles[0] = newSelectedFiles[0]
-  //   //   //console.log(selectedFiles)
+  //   //   //////console.log(selectedFiles)
   //   // }
 
   //   // else{
@@ -162,7 +162,7 @@ export default () => {
 
 
   //   // Check the result
-  //   //////////console.log(selectedFiles);
+  //   ////////////console.log(selectedFiles);
   // };
   const handleEditFileChange = async (event, tp) => {
     const files = event.target.files;
@@ -179,11 +179,11 @@ export default () => {
 
         try {
           const res = await triggerFunction(fileExtension, projectobj.name);
-          // //console.log(res); // Log the response from triggerFunction
+          // //////console.log(res); // Log the response from triggerFunction
           newSelectedFiles.push([res[0], res[1], file]);
           if (tp == "Calculation") {
             selectedFiles[0] = newSelectedFiles[0]
-            // //console.log(selectedFiles)
+            // //////console.log(selectedFiles)
           }
         } catch (error) {
           console.error('Error in triggerFunction:', error);
@@ -198,9 +198,9 @@ export default () => {
 
     let urls = []
     for (let i = 0; i < selectedFiles.length; i++) {
-      // ////////////////////console.log("hi")
+      // //////////////////////console.log("hi")
       let selectedFile = selectedFiles[i][2]
-      //console.log(selectedFiles[i][1])
+      //////console.log(selectedFiles[i][1])
       const url = getPredefinedUrl(selectedFiles[i][1]);
 
 
@@ -209,15 +209,15 @@ export default () => {
       }
 
       if (selectedFile != null) {
-        // //////////////console.log("hi",selectedFile)
+        // ////////////////console.log("hi",selectedFile)
         const reader = new FileReader();
         reader.onload = async (event) => {
           const fileContent = event.target.result;
           // urls.push(getPredefinedUrl(selectedFiles[i][1]))
           // Perform your upload logic here
           // For demonstration, let's just log the file extension and content
-          ////////////////////console.log('Selected File Extension:', fileExtension);
-          ////////////////////console.log('File Content:', fileContent);
+          //////////////////////console.log('Selected File Extension:', fileExtension);
+          //////////////////////console.log('File Content:', fileContent);
 
           try {
             // Example: Uploading file content using Fetch
@@ -255,7 +255,7 @@ export default () => {
 
     try {
       const uniqueUrls = Array.from(uniqueUrlsSet);
-      //////console.log(uniqueUrls);
+      ////////console.log(uniqueUrls);
       let uniqueUrlsObjects = []
       if (uniqueUrls.length == 1) {
         uniqueUrlsObjects.push({ file: uniqueUrls[0], name: "Calculations" })
@@ -278,12 +278,12 @@ export default () => {
         description: description,
         urls: uniqueUrlsObjects.length != 0 ? uniqueUrlsObjects : [],//new
       };
-      //////console.log(body)
+      ////////console.log(body)
 
 
 
       const responseFormData = await axios.post(`${baseurl}/consolidated/create`, body);
-      //////console.log(responseFormData);
+      ////////console.log(responseFormData);
       toast.success('Consolidated Statement Added successfully'); // Call toast.success after successful addition
       // setPerson("");
       // setCompanyName("");
@@ -313,13 +313,13 @@ export default () => {
   ////////////////////////////////////////////
 
   const handleprojectFetch = async () => {
-    ////////////////////console.log(companyname)
+    //////////////////////console.log(companyname)
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // ////////console.log(resp)
+      // //////////console.log(resp)
     }).catch(error => {
 
     })
@@ -329,7 +329,7 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-    ////////////////////console.log(check())
+    //////////////////////console.log(check())
     axios.get(`${baseurl}/user`)
       .then(response => {
         setUsers(response.data);
@@ -343,14 +343,14 @@ export default () => {
     // dispatch(getcontacts())
     // dispatch(getinvoice())
     dispatch(getConsolidated()).then((res) => {
-      ////console.log(res)
+      //////console.log(res)
       setConso(res)
     }).catch(err => {
-      ////console.log(err)
+      //////console.log(err)
     })
     setInvoices(invoices)
-    ////////////////console.log(contacts)
-    //////////console.log(invoices)
+    //////////////////console.log(contacts)
+    ////////////console.log(invoices)
   }, [contacts.length, invoices.length]);
 
 
@@ -360,13 +360,13 @@ export default () => {
       (person == "" || item.person == person) &&
       (pname == "" || item.project == pname)
     ))
-    //////////console.log(person,invoices1)
+    ////////////console.log(person,invoices1)
     // for(let i=0;i<invoices1.length;i++){
     //   if(invoices1[i].person==pid){
-    //     //////////console.log(invoices1[i])
+    //     ////////////console.log(invoices1[i])
     //   }
     // }
-    // //////////console.log(invoices1,temp)
+    // ////////////console.log(invoices1,temp)
     setInvoices(temp)
   }
 
@@ -384,7 +384,7 @@ export default () => {
       }
     })
       .then(response => {
-        ////////////////////console.log('Record deleted successfully:', response.data);
+        //////////////////////console.log('Record deleted successfully:', response.data);
         setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
       })
@@ -399,11 +399,11 @@ export default () => {
 
 
   const findprojectname = (project) => {
-    ////////////////console.log(project,"Find project name")
-    // ////////////////////console.log(pnamearr)
+    //////////////////console.log(project,"Find project name")
+    // //////////////////////console.log(pnamearr)
     let str = ""
     for (let i = 0; i < pnamearr.length; i++) {
-      // ////////////////console.log(pnamearr[i])
+      // //////////////////console.log(pnamearr[i])
       if (pnamearr[i]._id == project) {
         str = str + "{" + pnamearr[i].name + "}"
         break
@@ -411,7 +411,7 @@ export default () => {
 
     }
     // for(let i=0;i<projects.length;i++){
-    ////////////////////console.log(projects[i])
+    //////////////////////console.log(projects[i])
     //     for(let j=0;j<pnamearr.length;j++){
     //   if(pnamearr[j]._id==projects[i]){
     //     str=str+"{"+pnamearr[j].name+"}"
@@ -424,9 +424,9 @@ export default () => {
   // https://officecrm560.s3.ap-south-1.amazonaws.com/Imtiaz+Bandra++41./Lucky+Realty+Bandra1717420102462.xlsx
   // https://officecrm560.s3.ap-south-1.amazonaws.com/Imtiaz+Bandra++41./Lucky+Realty+Bandra1717419135299.xlsx
   const handleEditModal = (item) => {
-    ////console.log(item)
+    //////console.log(item)
 
-    ////////////////console.log(temp,"hi")
+    //////////////////console.log(temp,"hi")
 
     setEditProject(item.project)
     setEdittotalfees(item.total_amount)
@@ -454,26 +454,26 @@ export default () => {
 
     let urls = []
     for (let i = 0; i < selectedFiles.length; i++) {
-      // ////////////////////console.log("hi")
+      // //////////////////////console.log("hi")
       let selectedFile = selectedFiles[i][2]
 
       const url = getPredefinedUrl(selectedFiles[i][1]);
-      // //console.log(selectedFiles[i][1])
+      // //////console.log(selectedFiles[i][1])
 
       if (!uniqueUrlsSet.has(url)) {
         uniqueUrlsSet.add(url); // Add the URL to the Set
       }
 
       if (selectedFile != null) {
-        // //////////////console.log("hi",selectedFile)
+        // ////////////////console.log("hi",selectedFile)
         const reader = new FileReader();
         reader.onload = async (event) => {
           const fileContent = event.target.result;
           // urls.push(getPredefinedUrl(selectedFiles[i][1]))
           // Perform your upload logic here
           // For demonstration, let's just log the file extension and content
-          ////////////////////console.log('Selected File Extension:', fileExtension);
-          ////////////////////console.log('File Content:', fileContent);
+          //////////////////////console.log('Selected File Extension:', fileExtension);
+          //////////////////////console.log('File Content:', fileContent);
 
           try {
             // Example: Uploading file content using Fetch
@@ -511,7 +511,7 @@ export default () => {
 
     try {
       const uniqueUrls = Array.from(uniqueUrlsSet);
-      //////console.log(uniqueUrls);
+      ////////console.log(uniqueUrls);
       let uniqueUrlsObjects = []
       if (uniqueUrls.length == 1) {
         uniqueUrlsObjects.push({ file: uniqueUrls[0], name: "Calculations" })
@@ -534,12 +534,12 @@ export default () => {
         description: editDescription,
         urls: uniqueUrlsObjects.length != 0 ? uniqueUrlsObjects : editUrls,//new
       };
-      ////console.log(body)
+      //////console.log(body)
 
 
 
       const responseFormData = await axios.put(`${baseurl}/consolidated/${consoid}`, body);
-      //////console.log(responseFormData);
+      ////////console.log(responseFormData);
       toast.success('Consolidated Statement Added successfully'); // Call toast.success after successful addition
       // setPerson("");
       // setCompanyName("");
@@ -590,7 +590,7 @@ export default () => {
         <Nav fill variant="pills" className="flex-column flex-sm-row">
           <Nav.Item>
             <Nav.Link eventKey="profile" className="mb-sm-3 mb-md-0">
-            Table
+              Table
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -605,7 +605,7 @@ export default () => {
               <Container>
                 <form onSubmit={handleUpload}>
                   <Row >
-                  
+
                     <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Company Name</Form.Label>
@@ -617,9 +617,9 @@ export default () => {
                             handleprojectFetch()
                           }}>
                             <option value="">Select Option</option>
-                            <option value="Neo">Neo Modern</option>
-                            <option value="BZ">BZ Consultants</option>
-                            <option value="PMC">PMC</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
@@ -790,7 +790,7 @@ export default () => {
                           <pre style={{ whiteSpace: "pre-wrap" }}>
                             {row.urls && row.urls[0] && (
                               <>
-                                <a href={row.urls[0].file} download style={{ textDecoration: "underline", color: "blue" }}>
+                                <a href={geturl(row.urls[0].file)} download style={{ textDecoration: "underline", color: "blue" }}>
                                   -{row.urls[0].name}
                                 </a>
                                 <br />

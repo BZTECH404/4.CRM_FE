@@ -19,12 +19,13 @@ import { fetchProjects } from "../../features/projectslice";
 
 export default () => {
 
-  const [name,setName]=useState('')
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [name,setName]=useState('asd')
+  const [phone, setPhone] = useState('9820282944');
+  const [email, setEmail] = useState('abc@gmail.com');
+  const [message, setMessage] = useState('asdasdasd');
   const [projects,setprojects]=useState([])
   const [type,setType]=useState('')
+  const [istrue,setistrue]=useState(true)
 
   const [imageUrl, setImageUrl] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -73,13 +74,15 @@ export default () => {
     const file = event.target.files[0];
     if (file) {
       // Read file extension
+      setistrue(false)
       const fileExtension = file.name.split('.').pop();
       setSelectedFile(file);
       setFileExtension(fileExtension);
-      let arr1=await triggerFunction(fileExtension, folderName)
+      let arr1=await triggerFunction(fileExtension, name)
       setUrl(arr1[0]); // Update URL with folderName
       setKey(arr1[1])
       setIsFileSelected(true); // Enable upload button
+      setistrue(true)
     } else {
       setSelectedFile(null);
       setFileExtension('');
@@ -93,6 +96,52 @@ export default () => {
    
   // api call
   (async () => {
+
+    if (selectedFile != null) {
+      // ////////////////console.log("hi",selectedFile)
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const fileContent = event.target.result;
+        // urls.push(getPredefinedUrl(selectedFiles[i][1]))
+        // Perform your upload logic here
+        // For demonstration, let's just log the file extension and content
+        //////////////////////console.log('Selected File Extension:', fileExtension);
+        //////////////////////console.log('File Content:', fileContent);
+
+        try {
+          // Example: Uploading file content using Fetch
+
+          if (selectedFile) {
+            const responseFile = await fetch(url, {
+              method: 'PUT',
+              body: fileContent,
+              headers: {
+                'Content-Type': 'application/octet-stream', // Set appropriate content type
+              },
+              mode: 'cors', // Enable CORS
+            });
+            if (!responseFile.ok) {
+              throw new Error('Network response was not ok');
+            }
+
+            toast.success(`File uploaded succesfully`); // Call toast.success after successful addition
+            console.log(responseFile)
+            // Reload page after successful submission
+            // window.location.reload();
+
+            // Clear form data after submission
+
+          }
+        } catch (error) {
+          //console.error('Error:', error);
+          toast.error('Failed to add image'); // Display error toast if addition fails
+        }
+      };
+      reader.readAsArrayBuffer(selectedFile);
+    }
+  
+
+
     try {
       const ids = projects.map(user => user.id);
       const body = {
@@ -102,10 +151,13 @@ export default () => {
         type:type,
         description: message,
         projects:ids,
+        files:{
+          current:selectedFile?getPredefinedUrl(key):null
+        }
       };
-      //////////////////console.log(body)
+      ////////////////////console.log(body)
      const response = await axios.post(`${baseurl}/contact/create`, body);
-     //////////////////console.log(response.data)
+     ////////////////////console.log(response.data)
      setName('')
      setPhone('');
      setEmail('');
@@ -123,7 +175,7 @@ export default () => {
   ////////////////////////////////////////////
 
   const handleprojectFetch=async()=>{
-    ////////////////////console.log(companyname)
+    //////////////////////console.log(companyname)
    
 
     dispatch(fetchProjects({
@@ -131,7 +183,7 @@ export default () => {
       status:isActive?isActive:null
     })).then((resp)=>{
       setPnamearr(resp)
-      // ////////console.log(resp)
+      // //////////console.log(resp)
     }).catch(error=>{
 
     })
@@ -142,7 +194,7 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-   ////////////////////console.log(check())
+   //////////////////////console.log(check())
    axios.get(`${baseurl}/user`)
    .then(response => {
      setUsers(response.data);
@@ -153,7 +205,7 @@ export default () => {
     
 
       handleprojectFetch()
-      //////////////////console.log(pnamearr)
+      ////////////////////console.log(pnamearr)
   }, []);
 
  
@@ -178,7 +230,7 @@ export default () => {
       }
     })
       .then(response => {
-        ////////////////////console.log('Record deleted successfully:', response.data);
+        //////////////////////console.log('Record deleted successfully:', response.data);
         setData(prevData => prevData.filter(item => item.id !== id));
         toast.success('Record deleted successfully'); // Display success toast
       })
@@ -290,13 +342,31 @@ export default () => {
                   </InputGroup>
                 </Form.Group>
               </Col>
+              
+              <Col xs={12} md={6}>
+                      {name ? (<Form.Group id="Project Image" className="mb-4">
+                        <Form.Label>Contact Card/Profile</Form.Label>
+                        <InputGroup>
+                          <InputGroup.Text>
+                          </InputGroup.Text>
+                          <Form.Control
+                            type="file"
+                            onChange={handleFileChange}
+                            placeholder="Upload Image"
+                          />
+                        </InputGroup>
+                      </Form.Group>) : (null)}
+
+                    </Col>
               <Form.Label>Projects</Form.Label>
               <Multiselect tag="Projects" options={pnamearr} selectedValues={projects} setSelectedValues={setprojects}/>
                    
                     <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
-                      <Button variant="primary" type="submit" className="w-100 mt-3">
+                    {istrue && (  <Button variant="primary" type="submit" className="w-100 mt-3">
                         Submit
-                      </Button>
+                      </Button>)}  
+                    
+                    
                     </Col>
                   </Row>
                 </form>

@@ -5,9 +5,9 @@ import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fo
 import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-import { baseurl ,ProjectStatus} from "../../api";
+import { baseurl, ProjectStatus, companies } from "../../api";
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { check } from '../../checkloggedin'
 import { getcontacts } from "../../features/contactslice";
@@ -17,6 +17,8 @@ import { fetchProjects } from "../../features/projectslice";
 
 export default () => {
 
+  // let url1=useParams()
+  // console.log(url1)
   const [imageUrl, setImageUrl] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -24,7 +26,7 @@ export default () => {
   const [showModal, setShowModal] = useState(false);
   const [data, setData] = useState([]);
   const [editMode, setEditMode] = useState(false);
- 
+
   const itemsPerPage = 5; // Define itemsPerPage
 
   // State variables for edit modal
@@ -51,13 +53,13 @@ export default () => {
 
   const [pname, setPname] = useState('')
   const [pnamearr, setPnamearr] = useState([])
- 
+
   const [selectedusers, setSelectedusers] = useState([])
   // for this create invoice only
-  const [subject,setSubject]=useState(null)
-  const [amount,setAmount]=useState(null)
-  const [description,setDescription]=useState(null)
-  const [person,setPerson]=useState('')
+  const [subject, setSubject] = useState(null)
+  const [amount, setAmount] = useState(null)
+  const [description, setDescription] = useState(null)
+  const [person, setPerson] = useState('')
 
 
 
@@ -71,23 +73,23 @@ export default () => {
 
 
   // date
-  const [createdate,setCreateDate]=useState('')
-  const [credittype,setcredittype]=useState('')
+  const [createdate, setCreateDate] = useState('')
+  const [credittype, setcredittype] = useState('')
 
   const dispatch = useDispatch()
   const { contacts, loading, error } = useSelector((state) => state.contact);
 
 
   useEffect(() => {
-  
+
     dispatch(getcontacts())
-   
-    ////////////////console.log(contacts)
-    ////////////////console.log(invoices)
+
+    //////////////////console.log(contacts)
+    //////////////////console.log(invoices)
   }, [contacts.length]);
 
 
-  
+
   let [selectedFiles, setSelectedFiles] = useState([]);
   const handleFileChange = async (event) => {
     const files = event.target.files;
@@ -110,11 +112,11 @@ export default () => {
     }
 
     // After the loop, update selectedFiles with the accumulated data
-    
+
     setSelectedFiles([...selectedFiles, ...newSelectedFiles]);
 
     // Check the result
-    //////////////console.log(selectedFiles);
+    ////////////////console.log(selectedFiles);
   };
 
 
@@ -125,7 +127,7 @@ export default () => {
 
     let urls = []
     for (let i = 0; i < selectedFiles.length; i++) {
-      // ////////////////////console.log("hi")
+      // //////////////////////console.log("hi")
       let selectedFile = selectedFiles[i][2]
       const url = getPredefinedUrl(selectedFiles[i][1]);
 
@@ -135,15 +137,15 @@ export default () => {
       }
 
       if (selectedFile != null) {
-        // //////////////console.log("hi",selectedFile)
+        // ////////////////console.log("hi",selectedFile)
         const reader = new FileReader();
         reader.onload = async (event) => {
           const fileContent = event.target.result;
           // urls.push(getPredefinedUrl(selectedFiles[i][1]))
           // Perform your upload logic here
           // For demonstration, let's just log the file extension and content
-          ////////////////////console.log('Selected File Extension:', fileExtension);
-          ////////////////////console.log('File Content:', fileContent);
+          //////////////////////console.log('Selected File Extension:', fileExtension);
+          //////////////////////console.log('File Content:', fileContent);
 
           try {
             // Example: Uploading file content using Fetch
@@ -161,14 +163,15 @@ export default () => {
                 throw new Error('Network response was not ok');
               }
 
-            toast.success(`${selectedFiles[i][1]} uploaded succesfully`); // Call toast.success after successful addition
+              toast.success(`${selectedFiles[i][1]} uploaded succesfully`); // Call toast.success after successful addition
 
-            // Reload page after successful submission
-            // window.location.reload();
+              // Reload page after successful submission
+              // window.location.reload();
 
-            // Clear form data after submission
+              // Clear form data after submission
 
-          }} catch (error) {
+            }
+          } catch (error) {
             //console.error('Error:', error);
             toast.error('Failed to add image'); // Display error toast if addition fails
           }
@@ -180,30 +183,30 @@ export default () => {
 
     try {
       const uniqueUrls = Array.from(uniqueUrlsSet);
-      //////////////console.log(uniqueUrls);
+      ////////////////console.log(uniqueUrls);
       const uniqueUrlsObjects = uniqueUrls.map(url => ({ file: url, name: "Proforma Invoice" }));
 
 
-     
+
       const body = {
-        createdAt:createdate,
+        createdAt: createdate,
         amount: amount,
-        amount_paid:0,
-        person:person==''?undefined:person,
-        company:companyname,
-        project:pname==''?undefined:pname,
+        amount_paid: 0,
+        person: person == '' ? undefined : person,
+        company: companyname,
+        project: pname == '' ? undefined : pname,
         description: description,
-        subject:subject,
+        subject: subject,
         urls: uniqueUrlsObjects ? uniqueUrlsObjects : ["hello"],//new
-        type:credittype,
+        type: credittype,
 
       };
 
-     
-     
-      const responseFormData = await axios.post(`${baseurl}/invoice/create`,body);
-      ////////////////////console.log(responseFormData);
-      // toast.success('Task added successfully'); // Call toast.success after successful addition
+
+
+      const responseFormData = await axios.post(`${baseurl}/invoice/create`, body);
+      //////////////////////console.log(responseFormData);
+      toast.success('Invoice added successfully'); // Call toast.success after successful addition
       // setPerson(null);
       // setCompanyName(null);
       // setcredittype(null);
@@ -227,7 +230,7 @@ export default () => {
 
 
   const handleFileChange1 = (event) => {
-    
+
     const file = event.target.files[0];
     if (file) {
       // Read file extension
@@ -251,16 +254,16 @@ export default () => {
 
   const handleUpload1 = (e) => {
     e.preventDefault()
-    // ////////////////////console.log("hi")
+    // //////////////////////console.log("hi")
     if (selectedFile != null) {
-      ////////////////////console.log("hi",selectedFile)
+      //////////////////////console.log("hi",selectedFile)
       const reader = new FileReader();
       reader.onload = async (event) => {
         const fileContent = event.target.result;
         // Perform your upload logic here
         // For demonstration, let's just log the file extension and content
-        ////////////////////console.log('Selected File Extension:', fileExtension);
-        ////////////////////console.log('File Content:', fileContent);
+        //////////////////////console.log('Selected File Extension:', fileExtension);
+        //////////////////////console.log('File Content:', fileContent);
 
         try {
           // Example: Uploading file content using Fetch
@@ -276,7 +279,7 @@ export default () => {
             if (!responseFile.ok) {
               throw new Error('Network response was not ok');
             }
-            ////////////////////console.log('File uploaded successfully:', responseFile);
+            //////////////////////console.log('File uploaded successfully:', responseFile);
           }
 
           toast.success('Image added successfully'); // Call toast.success after successful addition
@@ -296,17 +299,17 @@ export default () => {
     // api call
     (async () => {
       try {
-        
+
         const ids = selectedusers.map(user => user.id);
         const body = {
-          subject:subject,
+          subject: subject,
           amount: amount,
           description: description,
-          project:pname,
+          project: pname,
           taskUrl: selectedFile ? getPredefinedUrl(key) : "hello"
         };
 
-        ////////////////console.log(body)
+        //////////////////console.log(body)
         // Example: Posting additional form data using Axios
         // const responseFormData = await axios.post(`${baseurl}/project/create`,body, {
         //   headers: {
@@ -315,7 +318,7 @@ export default () => {
         //   },
         // });
         const responseFormData = await axios.post(`${baseurl}/invoice/create`, body);
-        ////////////////////console.log(responseFormData);
+        //////////////////////console.log(responseFormData);
         toast.success('Task added successfully'); // Call toast.success after successful addition
         // window.location.reload()
         setSelectedFile(null)
@@ -332,14 +335,14 @@ export default () => {
   ////////////////////////////////////////////
 
   const handleprojectFetch = async () => {
-    ////////////////////console.log(companyname)
+    //////////////////////console.log(companyname)
     dispatch(fetchProjects({
-      company:companyname?companyname:null,
-      status:isActive?isActive:null
-    })).then((resp)=>{
+      company: companyname ? companyname : null,
+      status: isActive ? isActive : null
+    })).then((resp) => {
       setPnamearr(resp)
-      // ////////console.log(resp)
-    }).catch(error=>{
+      // //////////console.log(resp)
+    }).catch(error => {
 
     })
 
@@ -348,7 +351,7 @@ export default () => {
 
   //For Fetching Users and Projects
   useEffect(() => {
-    ////////////////////console.log(check())
+    //////////////////////console.log(check())
     axios.get(`${baseurl}/user`)
       .then(response => {
         setUsers(response.data);
@@ -409,7 +412,7 @@ export default () => {
               <Container>
                 <form onSubmit={handleUpload}>
                   <Row >
-                  <Col xs={12} md={6}>
+                    <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Creation Date</Form.Label>
                         <InputGroup>
@@ -418,7 +421,7 @@ export default () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                  <Col xs={12} md={6}>
+                    <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Contact</Form.Label>
                         <InputGroup>
@@ -453,15 +456,15 @@ export default () => {
                         <Form.Label>Company Name</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Select  value={companyname} onChange={(e) => {
+                          <Form.Select value={companyname} onChange={(e) => {
                             companyname = e.target.value
                             setCompanyName(e.target.value)
                             handleprojectFetch()
                           }}>
                             <option value="">Select Option</option>
-                            <option value="Neo">Neo Modern</option>
-                            <option value="BZ">BZ Consultants</option>
-                            <option value="PMC">PMC</option>
+                            {companies.map((option, index) => (
+                              <option key={index} value={option}>{option}</option>
+                            ))}
                           </Form.Select>
                         </InputGroup>
                       </Form.Group>
@@ -471,12 +474,12 @@ export default () => {
                         <Form.Label>Project Status</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Select  value={isActive} onChange={(e) => {
+                          <Form.Select value={isActive} onChange={(e) => {
                             isActive = e.target.value
                             setIsActive(e.target.value)
                             handleprojectFetch()
                           }}>
-                                <option value="">Select Option</option>
+                            <option value="">Select Option</option>
                             {/* Mapping through the arr array to generate options */}
                             {ProjectStatus.map((option, index) => (
                               <option key={index} value={option}>{option}</option>
@@ -526,7 +529,7 @@ export default () => {
 
 
                     <Col xs={12} md={6}>
-                      {person?( <Form.Group id="Project Image" className="mb-4">
+                      {person ? (<Form.Group id="Project Image" className="mb-4">
                         <Form.Label>Invoice Image if Required</Form.Label>
                         <InputGroup>
                           <InputGroup.Text>
@@ -537,8 +540,8 @@ export default () => {
                             placeholder="Upload Image"
                           />
                         </InputGroup>
-                      </Form.Group>):(null)}
-                     
+                      </Form.Group>) : (null)}
+
                     </Col>
                     {/* <Col xs={12} md={6}>
                       <Form.Group id="ptype" className="mb-4">
@@ -585,7 +588,7 @@ export default () => {
             </section>
           </Tab.Pane>
           {/* Second Pane */}
-        
+
         </Tab.Content>
       </Tab.Container>
       <Modal show={showModal && !editMode} onHide={handleCloseModal}>

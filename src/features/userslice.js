@@ -4,7 +4,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import {baseurl} from "../api";
 
-const initialState = {
+let initialState = {
   user1: [],
   loading: false,
   error: null
@@ -19,7 +19,7 @@ const datasSlice = createSlice({
       state.error = null;
     },
     fetchDataSuccess(state, action) {
-        // ////////////////console.log(action.payload)
+        // //////////////////console.log(action.payload)
       state.user1 = action.payload;
       state.loading = false;
     },
@@ -37,14 +37,26 @@ export const fetchAsyncData = () => async (dispatch) => {
   try {
 
     const response = await axios.get(`${baseurl}/user`);
-    // ////////////////console.log(response.data)
-    dispatch(fetchDataSuccess(response.data));
-    return response.data;
+    let users=response.data
+    users.sort((a, b) => a.username.localeCompare(b.username));
+    dispatch(fetchDataSuccess(users));
+    return users;
   } catch (error) {
-    ////////////////console.log(error)
+    //////////////////console.log(error)
     dispatch(fetchDataFailure(error.message));
   }
 };
+
+export const checkpath=()=>async (dispatch)=>{
+  try {
+    const response = await axios.get(`${baseurl}/checkpath`, { path,userId });
+    console.log(response.data); // Handle response
+    return true
+  } catch (error) {
+    console.error(error.response?.data || error.message); // Handle error
+  }
+
+}
 
 export default datasSlice.reducer;
 

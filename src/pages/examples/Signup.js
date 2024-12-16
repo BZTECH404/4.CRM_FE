@@ -10,6 +10,7 @@ import axios from "axios";
 import {baseurl} from "../../api";
 import { Routes } from "../../routes";
 import BgImage from "../../assets/img/illustrations/signin.svg";
+import { useHistory } from 'react-router-dom';
 
 
 
@@ -21,6 +22,8 @@ export default () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  let history = useHistory();
+
   const handleSubmit=async () => {
 
     try {
@@ -31,20 +34,25 @@ export default () => {
         email: email,
         password: password,
       };
-      //////////////////console.log(body)
+      ////////////////////console.log(body)
       
       const responseFormData = await axios.post(`${baseurl}/user/create`,body);
-      //////////////////console.log(responseFormData);
+      ////////////////////console.log(responseFormData);
       toast.success('User registered');
       setEmail('')
       setUsername('')
       setPassword('')
+      // history.push("/sign-in");
     } catch (error) {
-      //////////////////console.log(error);
+      ////////////////////console.log(error);
       toast.error('User Already Exists');
       
     }
   };
+
+  const handleSignin = ()=>{
+    // history.push('/sign-in');
+  }
   
   return (
     <main>
@@ -112,11 +120,8 @@ export default () => {
                   </Button>
                 </div> */}
                 <div className="d-flex justify-content-center align-items-center mt-4">
-                  <span className="fw-normal">
+                  <span className="fw-normal" onClick={handleSignin}>
                     Already have an account?
-                    <Card.Link as={Link} to={Routes.Signin.path} className="fw-bold">
-                     
-                    </Card.Link>
                   </span>
                 </div>
               </div>

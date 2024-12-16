@@ -9,12 +9,12 @@ import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
 import BgImage from "../../assets/img/illustrations/signin.svg";
-import {baseurl} from '../../api';
-import {check} from '../../checkloggedin'
+import { baseurl } from '../../api';
+import { check } from '../../checkloggedin'
 
 //absjdhasojh
 export default () => {
-  
+
   // for local
   // const [email, setEmail] = useState('john_doe');
   // const [password, setPassword] = useState('password123');
@@ -34,25 +34,30 @@ export default () => {
     };
 
     try {
-      //////////////////console.log(baseurl,requestData)
       const response = await axios.post(`${baseurl}/user/login`, requestData);
       const token = response.data.token;
-      //////////////////console.log(response);
+      const username = response.data.username; // Assuming username is part of the response data
+
+      // Display success message
       toast.success('Login Successfully');
 
+      // Store token and username in localStorage
       localStorage.setItem('token', token);
-      //////////////////console.log(token);
+      localStorage.setItem('username', username); // Store username
 
+      // Clear form fields
       setEmail('');
       setPassword('');
-      //////////////////console.log(check())
+
+      // Redirect to dashboard
       history.push('/dashboard/overview');
     } catch (error) {
-      //console.error('Error:', error);
+      // Display error message
       toast.error('Wrong Credentials');
     }
-  }
-  const handleSignup = ()=>{
+  };
+
+  const handleSignup = () => {
     history.push('/sign-up');
   }
 
@@ -74,7 +79,7 @@ export default () => {
                         <FontAwesomeIcon icon={faEnvelope} />
                       </InputGroup.Text>
                       {/* type="email" */}
-                      <Form.Control autoFocus required  placeholder="example@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <Form.Control autoFocus required placeholder="example@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     </InputGroup>
                   </Form.Group>
                   <Form.Group>
@@ -92,7 +97,7 @@ export default () => {
                         <FormCheck.Input id="defaultCheck5" className="me-2" />
                         <FormCheck.Label htmlFor="defaultCheck5" className="mb-0">Remember me</FormCheck.Label>
                       </Form.Check> */}
-                      <Card.Link className="small text-end">Lost password?</Card.Link>
+                      {/* <Card.Link className="small text-end" onClick={handleSignup}>Create New User</Card.Link> */}
                     </div>
                   </Form.Group>
                   <Button variant="primary" type="submit" className="w-100" style={{ color: 'white' }}>
