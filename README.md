@@ -43,7 +43,7 @@ Ensure you have the following installed on your 🖥️ machine:
 ### 🚀 Steps
 1. 🖇️ Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone [<repository-url>](https://github.com/BZTECH404/4.CRM_FE.git)
    ```
 2. Navigate to the project directory:
    ```bash
