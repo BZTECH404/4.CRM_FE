@@ -292,7 +292,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                          <Form.Control  type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -302,7 +302,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus type="number" placeholder="Contact No" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                          <Form.Control  type="number" placeholder="Contact No" value={phone} onChange={(e) => setPhone(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -312,7 +312,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                          <Form.Control  type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>

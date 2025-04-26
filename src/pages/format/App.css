@@ -17,7 +17,7 @@ input {
 /* Add this to your App.css or style file */
 .preview-cell {
 border: 1px solid #000; /* Border to simulate a table cell */
-text-align: center; /* Center the content */
+/* text-align: center; Center the content */
 padding: 8px; /* Padding for better spacing */
 min-width: 100px; /* Ensure cells have a minimum width */
 }
@@ -26,8 +26,3 @@ table {
 border-collapse: collapse; /* Ensure borders between cells collapse into one */
 }
 
-td, th {
-border: 1px solid #000;
-padding: 8px;
-text-align: center;
-}

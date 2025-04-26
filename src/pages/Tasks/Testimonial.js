@@ -204,7 +204,7 @@ export default () => {
                                 <InputGroup.Text>
 
                                 </InputGroup.Text>
-                                <Form.Control autoFocus required type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                                <Form.Control  required type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
                               </InputGroup>
                             </Form.Group>
                           </Col>
@@ -215,7 +215,7 @@ export default () => {
                                 <InputGroup.Text>
 
                                 </InputGroup.Text>
-                                <Form.Control autoFocus required type="text" placeholder="Message" value={message} onChange={(e) => setMessage(e.target.value)} />
+                                <Form.Control  required type="text" placeholder="Message" value={message} onChange={(e) => setMessage(e.target.value)} />
                               </InputGroup>
                             </Form.Group>
                           </Col>

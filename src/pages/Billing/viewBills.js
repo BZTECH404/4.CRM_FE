@@ -18,13 +18,14 @@ import { getinvoice, disableinvoice } from '../../features/invoiceSlice'
 import '../../style.css'; // Import the CSS file where your styles are defined
 import { fetchProjects } from "../../features/projectslice";
 import { getConsolidated } from "../../features/consolidatedSlice";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
-
-export default () => {
+const Comp = ({ptbf}) => {
   // if(true){
   //   return <p>Unauthorized</p>
   // }
-  const [pname, setPname] = useState('');
+  const [pname, setPname] = useState(ptbf?ptbf:"");
   const [people, setPeople] = useState('');
   let [pnamearr, setPnamearr] = useState([]);
   const [taskstatus, setTaskStatus] = useState('');
@@ -115,6 +116,94 @@ export default () => {
   let [isDisabled, setisDisabled] = useState(false)
   
 
+
+ // Function to format date (returns only the date)
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-IN"); // Formats as DD/MM/YYYY based on Indian locale
+};
+
+const downloadExcelFile = () => {
+  if (!data || data.length === 0) {
+    alert("No data available to download.");
+    return;
+  }
+
+  // Define the headers based on table type
+  const headers =
+    typebill === "invoice"
+      ? [
+          "Created At",
+          "Invoice ID",
+          "Type",
+          "Amount",
+          "Amount Paid",
+          "Person",
+          "Company",
+          "Project",
+          "Subject",
+          "Description",
+          "File Link",
+        ]
+      : [
+          "Created At",
+          "Type",
+          "Amount",
+          "TDS",
+          "GST",
+          "Bank",
+          "Company",
+          "Person",
+          "Project",
+          "Subject",
+          "Description",
+          "Invoice",
+          "File Links",
+        ];
+
+  // Map data to an array of arrays (table format)
+  const rows = data.map((row) =>
+    typebill === "invoice"
+      ? [
+          formatDate(row.createdAt),
+          row._id,
+          row.type,
+          row.amount,
+          row.amount_paid,
+          findperson(row.person),
+          row.company,
+          findprojectname(row.project),
+          row.subject,
+          row.description,
+          row.urls?.[0]?.file || "N/A",
+        ]
+      : [
+          formatDate(row.createdAt),
+          row.type,
+          row.amount,
+          row.tds,
+          row.gst,
+          row.bank,
+          row.company,
+          findperson(row.person),
+          findprojectname(row.project),
+          row.subject,
+          row.description,
+          row.invoice,
+          row.urls?.map((url) => url.file).join(", ") || "N/A",
+        ]
+  );
+
+  // Create a worksheet
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+  // Generate Excel file and trigger download
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
+  saveAs(dataBlob, `Exported_${typebill}_data.xlsx`);
+};
   // filtering from Invoice,Bills
 
   useEffect(() => {
@@ -195,6 +284,7 @@ export default () => {
 
     // For Consolidated
     let found = false
+    if(conso){
     for (let i = 0; i < conso.length; i++) {
       if (conso[i].project == pname) {
         setcurrconso(conso[i])
@@ -208,6 +298,7 @@ export default () => {
       setcurrconso({})
       currconso = {}
     }
+  }
 
 
     // .then((bill) => {
@@ -234,7 +325,7 @@ export default () => {
     }
 
     if (typebill == "invoice") {
-      //////console.log(invoice, "invoice")
+      console.log(invoice, "invoice",pname)
       tempdata = invoice.filter(item =>
         (companyname === "" || item.company === companyname) &&
         (pname === "" || item.project === pname) &&
@@ -742,7 +833,7 @@ export default () => {
                   setPname(e.target.value)
                 }}>
                   <option value="">Select Option</option>
-                  {pnamearr.map((option, index) => (
+                  {pnamearr?.map((option, index) => (
                     <option key={index} value={option._id}>{option.name}</option>
                   ))}
                 </Form.Select>
@@ -866,7 +957,7 @@ export default () => {
               <Form.Label>View Consolidated Statement for Project</Form.Label>
             </Form.Group>
             {isChecked ? (<>
-              <h4>Total Paid:{sum}</h4>
+              <h4>{type==='invoice'?`Total Invoice:${sum}`:`Total Paid:${sum}`}</h4>
               {pname ? (
                 <>
                   <h4>Selected Project:{findprojectname(pname)}</h4>
@@ -912,7 +1003,7 @@ export default () => {
           <Form.Label>Search By Name, Contact, Email, or Description</Form.Label>
           <InputGroup>
             <InputGroup.Text></InputGroup.Text>
-            <Form.Control autoFocus type="text" placeholder="Name" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Form.Control  type="text" placeholder="Name" value={search} onChange={(e) => setSearch(e.target.value)} />
           </InputGroup>
         </Form.Group>
       </Col> */}
@@ -939,7 +1030,7 @@ export default () => {
                       <h5>Service List</h5>
                     </Col>
                     <Col style={{ width: "100%" }} className="text-end">
-                      <Button variant="secondary" size="sm">See all</Button>
+                      <Button onClick={()=>downloadExcelFile()} variant="secondary" size="sm">Download Excel</Button>
                     </Col>
                   </Row>
                 </Card.Header>
@@ -966,25 +1057,25 @@ export default () => {
                         <td colSpan="6" className="text-center">loading...</td>
                       </tr>
                     ) : (
-                      data.map((row, index) => (
+                      data.filter((row)=>pname==""||row.project===pname).map((row, index) => (
                         <tr key={index}>
                           <td>{timeinIndia(row.createdAt)}</td>
+                          <td colSpan="1" style={{ cursor: "pointer", whiteSpace: "pre-wrap" }}>{findprojectname(row.project)}</td>
                           <td>{row._id}</td>
                           <td>{row.type}</td>
                           <td>{row.amount}</td>
                           <td>{row.amount_paid}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{findperson(row.person)}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.company}</td>
-                          <td colSpan="1" style={{ cursor: "pointer", whiteSpace: "pre-wrap" }}>{findprojectname(row.project)}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.subject}</td>
                           <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}>{row.description}</pre></td>
                           {/* <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}>hi</pre></td> */}
                           <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}><a href={(row.urls[0])?.file} download style={{ textDecoration: "underline", color: "blue" }}>-{(row.urls[0])?.name}</a></pre></td>
 
                           <td>
-                            <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
+                          {(check()[1]=="john_doe" || check()[1]=="riteshk08") && <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
                               <FontAwesomeIcon icon={faEdit} />
-                            </Button>
+                            </Button>}
                             {check()[1]=="john_doe" && (<Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => {
                               dispatch(disableinvoice(row._id))
                               // console.log(invoice)
@@ -1033,7 +1124,7 @@ export default () => {
                       <h5>Service List</h5>
                     </Col>
                     <Col style={{ width: "100%" }} className="text-end">
-                      <Button variant="secondary" size="sm">See all</Button>
+                      <Button onClick={()=>downloadExcelFile()} variant="secondary" size="sm">Download Excel</Button>
                     </Col>
                   </Row>
                 </Card.Header>
@@ -1067,12 +1158,12 @@ export default () => {
                           <td>{timeinIndia(row.createdAt)}</td>
                           <td>{row.type}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.amount}</td>
+                          <td colSpan="1" style={{ cursor: "pointer", whiteSpace: "pre-wrap" }}>{findprojectname(row.project)}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.tds}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.gst}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.bank}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.company}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{findperson(row.person)}</td>
-                          <td colSpan="1" style={{ cursor: "pointer", whiteSpace: "pre-wrap" }}>{findprojectname(row.project)}</td>
                           <td colSpan="1" style={{ whiteSpace: "pre-wrap" }}>{row.subject}</td>
                           <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}>{row.description}</pre></td>
                           <td colSpan="1"  ><pre style={{ whiteSpace: "pre-wrap" }}>{row.invoice}</pre></td>
@@ -1098,9 +1189,9 @@ export default () => {
                             </td>
                           )}
                           <td>
-                            <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
+                          {check()[1]=="john_doe" || check()[1]=="riteshk08" &&<Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
                               <FontAwesomeIcon icon={faRadiation} />
-                            </Button>
+                            </Button>}
                             {check()[1]=="john_doe" && (<Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={(e) => {
 
                               let tempbills = bill.map(bill1 => ({ ...bill1 })); // Shallow copy each object in the array
@@ -1159,7 +1250,7 @@ export default () => {
               <Form.Label>Creation Date</Form.Label>
               <InputGroup>
                 <InputGroup.Text></InputGroup.Text>
-                <Form.Control autoFocus required type="date" placeholder="Amount" value={editcreatedAt} onChange={(e) => seteditcreatedAt(e.target.value)} />
+                <Form.Control  required type="date" placeholder="Amount" value={editcreatedAt} onChange={(e) => seteditcreatedAt(e.target.value)} />
               </InputGroup>
             </Form.Group>
             <Form.Group className="mb-3" controlId="editDescription">
@@ -1327,3 +1418,4 @@ export default () => {
 }
 
 
+export default Comp;

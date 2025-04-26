@@ -602,7 +602,7 @@ export default (props) => {
                                               Delete
                                             </Button>
                                             <Button
-                                              style={{ color: "grey" }}
+                                              style={{ color: "black" }}
                                               onClick={(e) => {
                                                 handleComplete(task._id, task.taskCompleted,)
                                                 switchstatus(bucket, task._id)
@@ -863,7 +863,7 @@ export default (props) => {
             <InputGroup>
               <InputGroup.Text>
               </InputGroup.Text>
-              <Form.Control autoFocus type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
+              <Form.Control  type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
             </InputGroup>
           </Form.Group>
           {/* users */}

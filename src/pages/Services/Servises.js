@@ -205,7 +205,7 @@ export default () => {
                               <InputGroup>
                                 <InputGroup.Text>
                                 </InputGroup.Text>
-                                <Form.Control autoFocus required type="text" placeholder="Heading" value={heading} onChange={(e) => setHeading(e.target.value)} />
+                                <Form.Control  required type="text" placeholder="Heading" value={heading} onChange={(e) => setHeading(e.target.value)} />
                               </InputGroup>
                             </Form.Group>
                           </Col>
@@ -240,7 +240,7 @@ export default () => {
                               <InputGroup>
                                 <InputGroup.Text>
                                 </InputGroup.Text>
-                                <Form.Control autoFocus required type="text" placeholder="service_name" value={service_name} onChange={(e) => setService_name(e.target.value)} />
+                                <Form.Control  required type="text" placeholder="service_name" value={service_name} onChange={(e) => setService_name(e.target.value)} />
                               </InputGroup>
                             </Form.Group>
                           </Col>
@@ -250,7 +250,7 @@ export default () => {
                               <InputGroup>
                                 <InputGroup.Text>
                                 </InputGroup.Text>
-                                <Form.Control autoFocus required type="text" placeholder="benfits_heading" value={benfits_heading} onChange={(e) => setBenfits_heading(e.target.value)} />
+                                <Form.Control  required type="text" placeholder="benfits_heading" value={benfits_heading} onChange={(e) => setBenfits_heading(e.target.value)} />
                               </InputGroup>
                             </Form.Group>
                           </Col>

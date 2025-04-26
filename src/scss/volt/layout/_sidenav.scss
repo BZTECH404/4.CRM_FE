@@ -171,13 +171,13 @@
 	overflow-y: hidden;
 	.accordion-button{
 		&::after {
-			background-image: none;
-			content: '\f054';
-			font-family: $font-awesome-5;
-			font-size: $font-size-sm;
-			font-weight: 900;
-			height:1.25rem;
-			width:.5rem;
+			// background-image: none;
+			// content: '\f054';
+			// font-family: $font-awesome-5;
+			// font-size: $font-size-sm;
+			// font-weight: 900;
+			// height:1.25rem;
+			// width:.5rem;
 		}
 		&:not(.collapsed) {
 			background-color:#2e3650;
@@ -208,6 +208,7 @@
 
 .user-card{
 	border-bottom: 0.0625rem solid #2e3650;
+	// background-color: aqua;
 }
 
 @include media-breakpoint-down(sm) {

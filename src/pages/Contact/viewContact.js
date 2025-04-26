@@ -15,8 +15,7 @@ import Multiselect from "../../components/Multiselect";
 import { fetchAsyncData, deleteContact } from '../../features/contactslice'
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProjects } from "../../features/projectslice";
-
-export default () => {
+const Comp= () => {
   const [pname, setPname] = useState('');
   const [people, setPeople] = useState('');
   let [pnamearr, setPnamearr] = useState([]);
@@ -64,35 +63,11 @@ export default () => {
   const [istrue, setistrue] = useState(true)
   const [url, setUrl] = useState('');
   const [key,setKey]=useState("");
-
+  let [findata,setfindata]=useState([])
 
   // for users
   const { contacts, loading, error } = useSelector((state) => state.contact);
 
-  //   useEffect(() => {
-  //     // ////////////////////console.log(contacts)
-  //     // (async () =>{
-  //     // const response = await axios.put(`${baseurl}/task/filter`, {
-  //     //   project:pname||undefined,
-  //     //   type:types||undefined
-  //     // });
-  //     // setData(response.data);
-  //     // dispatch(fetchAsyncData()).then(result=>{
-  //     //   setUsers(result);
-  //     // }).catch(err=>{
-  //     //   // ////////////////////console.log(err)
-  //     // })
-  // //   })()
-  //   // dispatch(fetchAsyncData())
-  //   if(contacts.length!=0){
-  //     // ////////////////////console.log("once")
-  //     // setUsers(user1)
-  //   }
-  //   // setUsers(user1)
-  //   // ////////////////////console.log(loading)
-  //   handleprojectFetch()
-  //     // handleFetch()
-  //   }, [contacts.length]);
 
   useEffect(() => {
     handleprojectFetch()
@@ -100,23 +75,23 @@ export default () => {
   }, [])
 
   const handleprojectFetch = async () => {
-    //////////////////////console.log(companyname)
+    ////////////////////////console.log(companyname)
     dispatch(fetchProjects({
       company: companyname ? companyname : null,
       status: isActive ? isActive : null
     })).then((resp) => {
       setPnamearr(resp)
-      // //////////console.log(resp)
+      // ////////////console.log(resp)
     }).catch(error => {
     })
 
   }
   const findprojectname = (projects) => {
-    // ////////////////////console.log(projects,"Find project name")
-    // ////////////////////console.log(pnamearr)
+    // //////////////////////console.log(projects,"Find project name")
+    // //////////////////////console.log(pnamearr)
     let str = ""
     for (let i = 0; i < projects.length; i++) {
-      ////////////////////console.log(projects[i])
+      //////////////////////console.log(projects[i])
       for (let j = 0; j < pnamearr.length; j++) {
         if (pnamearr[j]._id == projects[i]) {
           str = str + "{" + pnamearr[j].name + "}"
@@ -131,32 +106,33 @@ export default () => {
     if (e) {
       e.preventDefault()
     }
-    ////////////////////console.log("hello")
+    //////////////////////console.log("hello")
     const body = {
       project: pname,
       type: type,
       isDisabled:isDisabled
     }
-    ////////////////////console.log(body)
+    //////////////////////console.log(body)
     try {
       let response = await axios.put(`${baseurl}/contact/all`, body);
       let arr=response.data
       arr.sort((a, b) => a.name.localeCompare(b.name));
-      // console.log(arr)
+      //console.log(arr)
       setData(arr);
-      // console.log(response.data)
+      setfindata(arr)
+      // //console.log(response.data)
 
     } catch (error) {
-      //console.error(error);
+      ////console.error(error);
     }
   };
 
 
   const handleEditModal = (item) => {
-    ////////////////////console.log(pnamearr)
+    //////////////////////console.log(pnamearr)
     let temp = []
     let temppro = item.projects
-    ////////////////////console.log(temppro,pnamearr)
+    //////////////////////console.log(temppro,pnamearr)
     for (let j = 0; j < pnamearr.length; j++) {
       if ((temppro).includes(pnamearr[j]._id)) {
         temp.push({
@@ -165,7 +141,7 @@ export default () => {
         })
       }
     }
-    ////////////////////console.log(temp,"hi")
+    //////////////////////console.log(temp,"hi")
     setEditconid(item._id)
     setEditProjects(temp)
     setEditname(item.name)
@@ -178,19 +154,19 @@ export default () => {
   }
 
   const handleEditSubmit = async () => {
-    //////////////////////console.log(taskid,"chekcing task id")
+    ////////////////////////console.log(taskid,"chekcing task id")
     const token = localStorage.getItem('token');
     // Amazon s3
     if (selectedFile != null) {
-      // ////////////////console.log("hi",selectedFile)
+      // //////////////////console.log("hi",selectedFile)
       const reader = new FileReader();
       reader.onload = async (event) => {
         const fileContent = event.target.result;
         // urls.push(getPredefinedUrl(selectedFiles[i][1]))
         // Perform your upload logic here
         // For demonstration, let's just log the file extension and content
-        //////////////////////console.log('Selected File Extension:', fileExtension);
-        //////////////////////console.log('File Content:', fileContent);
+        ////////////////////////console.log('Selected File Extension:', fileExtension);
+        ////////////////////////console.log('File Content:', fileContent);
 
         try {
           // Example: Uploading file content using Fetch
@@ -209,7 +185,7 @@ export default () => {
             }
 
             toast.success(`File uploaded succesfully`); // Call toast.success after successful addition
-            console.log(responseFile)
+            //console.log(responseFile)
             // Reload page after successful submission
             // window.location.reload();
 
@@ -217,7 +193,7 @@ export default () => {
 
           }
         } catch (error) {
-          //console.error('Error:', error);
+          ////console.error('Error:', error);
           toast.error('Failed to add image'); // Display error toast if addition fails
         }
       };
@@ -238,7 +214,7 @@ export default () => {
       projects: temp,
       newurl: selectedFile ? getPredefinedUrl(key) : null
     };
-    //////////////////console.log(editData)
+    ////////////////////console.log(editData)
 
     try {
       const response = await axios.put(`${baseurl}/contact/${editconid}`, editData, {
@@ -246,7 +222,7 @@ export default () => {
           Authorization: `Bearer ${token}`
         }
       });
-      //////////////////console.log(response.data);
+      ////////////////////console.log(response.data);
       toast.success("Task updated successfully");
       setShowModal(false);
       setEditMode(false);
@@ -258,13 +234,13 @@ export default () => {
       setEditdescription("")
       handleFetch()
     } catch (error) {
-      //console.error(error);
+      ////console.error(error);
       toast.error("Failed to update task");
     }
   }
 
   const handletaskhistory = async (row) => {
-    //////////////////////console.log("hi")
+    ////////////////////////console.log("hi")
     try {
       // fetching all Histories of one task
       let response = await axios.get(`${baseurl}/history/${row._id}`)
@@ -273,13 +249,13 @@ export default () => {
       for (let i = 0; i < response.data.length; i++) {
         let res = await axios.get(`${baseurl}/history/single/${(response.data)[i]._id}`)
         temp.push(res.data)
-        //////////////////////console.log(temp)
+        ////////////////////////console.log(temp)
       }
       setHistory(temp)
 
 
     } catch (error) {
-      //////////////////////console.log(error)
+      ////////////////////////console.log(error)
     }
 
 
@@ -322,7 +298,24 @@ export default () => {
       // setIsFileSelected(false); // Disable upload button
     }
   };
+  const handleFilter = () => {
+    //console.log(type,isDisabled,typeof(isDisabled))
+    const regex = new RegExp(search, 'i');
 
+    let filtered = data.filter(item =>
+      (pname == "" || item.projects.includes(pname)) &&
+      (type == "" || item.type == type) &&
+      (isDisabled == "" || item.isDisabled == (isDisabled == true)) &&
+      (search=="" || regex.test(item.name) ||
+      regex.test(item.phone) ||
+      regex.test(item.description) ||
+      regex.test(item.email))
+    );
+
+    // //console.log(filtered);
+    setfindata(filtered);
+
+  }
 
   const types = ["Developer", "Financer", "MEP", "Structural", "Architect", "Land Owner", "Agent", "Miscellaneous Consultant", "Society Member"]
 
@@ -330,7 +323,9 @@ export default () => {
   return (
     <>
       <ToastContainer />
-      <form onSubmit={(e) => handleFetch(e)}>
+      <form onSubmit={(e) =>  {
+        e.preventDefault()
+        handleFilter()}}>
         <Row>
           <Col xs={12} md={4}>
             <Form.Group id="pname" className="mb-4">
@@ -417,7 +412,7 @@ export default () => {
               <InputGroup>
                 <InputGroup.Text>
                 </InputGroup.Text>
-                <Form.Control autoFocus type="text" placeholder="Name" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Form.Control  type="text" placeholder="Name" value={search} onChange={(e) => setSearch(e.target.value)} />
               </InputGroup>
             </Form.Group>
           </Col>
@@ -432,7 +427,7 @@ export default () => {
         <Container>
           <Row>
             <Col className="mx-auto">
-              <Card style={{ width: "130%", marginLeft: "-12%", paddingLeft: "5%" }} border="light" className="shadow-sm">
+              <Card style={{ width: "130%", paddingLeft: "5%" }} border="light" className="shadow-sm">
                 <Card.Header>
                   <Row style={{ width: "100%" }} className="align-items-center">
                     <Col>
@@ -458,12 +453,12 @@ export default () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.length == 0 ? (
+                    {findata.length == 0 ? (
                       <tr>
                         <td colSpan="6" className="text-center">loading...</td>
                       </tr>
                     ) : (
-                      data.map((row, index) => {
+                      findata.map((row, index) => {
                         // if((row.projects).length!=0){
                         return (
                           <tr key={index}>
@@ -573,3 +568,4 @@ add history */}
 }
 
 
+export default Comp;

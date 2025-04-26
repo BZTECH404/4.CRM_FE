@@ -88,8 +88,11 @@ export const fetchProjects = (body) => async (dispatch) => {
     for (let i = 0; i < (response.data).length; i++) {
       proj[i] = (response.data)[i]
     }
-    proj.sort((a1, b1) => a1.name?.localeCompare(b1.name));
-    // ////////console.log(proj)
+    // proj.sort((a1, b1) => a1.name?.localeCompare(b1.name));
+    proj.sort((a1, b1) => {
+      return a1.name?.localeCompare(b1.name, undefined, { numeric: true });
+    });
+    // console.log(proj)
     return proj
 
   } catch (error) {

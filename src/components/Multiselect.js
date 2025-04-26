@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {  Col, Row, Form, InputGroup, Modal, Tab , Nav} from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
 import 'react-toastify/dist/ReactToastify.css';
-export default ({options,selectedValues,setSelectedValues,tag}) => {
+const Multiselect = ({options,selectedValues,setSelectedValues,tag}) => {
   const [selectedValue, setSelectedValue] = useState(null);
 
 tag=tag?tag:'People'
@@ -34,7 +34,6 @@ tag=tag?tag:'People'
     <div>
       <ToastContainer/>
        
-        <Col xs={12} md={6}>
                       <Form.Group id="ProjectName" className="mb-4">
                         <InputGroup>
                           <Form.Select value={selectedValue ? selectedValue.id : ''} onChange={handleChange}>
@@ -51,14 +50,12 @@ tag=tag?tag:'People'
                           </Form.Select>   
                           </InputGroup>
                       </Form.Group>
-                    </Col>
-                    <Col xs={12} md={6}>
                       <Form.Group id="ProjectName" className="mb-4">
                         <Form.Label>{tag}</Form.Label>
                         {selectedValues.length > 0 && (
-                          <div>
+                          <div style={{ display:"flex",flexDirection:"column",width:"max-content",margin: '0 5px' }}>
                             {selectedValues.map((value) => (
-                              <span key={value.id} style={{ margin: '0 5px' }}>
+                              <span key={value.id} style={{ border:"1px solid red",borderRadius:"10px",margin: '0 5px' }}>
                                 {value.name}
                                 <button onClick={() => handleRemove(value.id)} style={{ marginLeft: '5px' }}>
                                   x
@@ -68,9 +65,9 @@ tag=tag?tag:'People'
                           </div>
                         )}
                       </Form.Group>
-                    </Col>
                     
     </div>
    
   );
 };
+export default Multiselect

@@ -99,13 +99,14 @@ export default () => {
   let [editDescription, setEditDescription] = useState('')
   let [previous, setPrevious] = useState([])
 
-
+  let [stop,setstop]=useState(true)
 
 
   const handleFileChange = async (event, tp) => {
     const files = event.target.files;
     const newSelectedFiles = [];
     ////////////console.log(tp)
+    setstop(false)
     for (let i = 0; i < files.length; i++) {
 
       const file = files[i];
@@ -116,15 +117,19 @@ export default () => {
         setSelectedFile(file);
         setFileExtension(fileExtension);
         const projectobj = pnamearr.find(proj => proj._id == pname);
-        const arr1 = await triggerFunction(fileExtension, projectobj.name);
+        const arr1 = await triggerFunction(fileExtension, projectobj.name)
 
         // Add arr1[0] and arr1[1] to the newSelectedFiles array
         newSelectedFiles.push([arr1[0], arr1[1], file]);
+        setstop(true)
+
       }
     }
     if (tp == "Calculation") {
       selectedFiles[0] = newSelectedFiles[0]
     }
+   
+
     //////console.log(selectedFiles)
   };
   // const handleEditFileChange = async (event, tp) => {
@@ -167,6 +172,8 @@ export default () => {
   const handleEditFileChange = async (event, tp) => {
     const files = event.target.files;
     const newSelectedFiles = [];
+    setstop(false)
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
@@ -178,18 +185,20 @@ export default () => {
         const projectobj = pnamearr.find(proj => proj._id == editProject);
 
         try {
-          const res = await triggerFunction(fileExtension, projectobj.name);
+          const res = await triggerFunction(fileExtension, projectobj.name)
           // //////console.log(res); // Log the response from triggerFunction
           newSelectedFiles.push([res[0], res[1], file]);
           if (tp == "Calculation") {
             selectedFiles[0] = newSelectedFiles[0]
             // //////console.log(selectedFiles)
           }
+          setstop(true)
         } catch (error) {
           console.error('Error in triggerFunction:', error);
         }
       }
     }
+
   };
 
   const handleUpload = async (e) => {
@@ -687,7 +696,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                          <Form.Control  required type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -697,7 +706,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="number" placeholder="Amount" value={amounttbrecieved} onChange={(e) => setAmounttbRecieved(e.target.value)} />
+                          <Form.Control  required type="number" placeholder="Amount" value={amounttbrecieved} onChange={(e) => setAmounttbRecieved(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -707,7 +716,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="number" placeholder="Amount" value={amountrecieved} onChange={(e) => setAmountRecieved(e.target.value)} />
+                          <Form.Control  required type="number" placeholder="Amount" value={amountrecieved} onChange={(e) => setAmountRecieved(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -747,9 +756,9 @@ export default () => {
                       <textarea rows="4" cols="50" type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
                     </Col>
                     <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
-                      <Button variant="primary" type="submit" className="w-100 mt-3">
+                    {stop &&<Button variant="primary" type="submit" className="w-100 mt-3">
                         Submit
-                      </Button>
+                      </Button>}
                     </Col>
                   </Row>
                 </form>
@@ -839,21 +848,21 @@ export default () => {
             <Form.Label>Total Fees</Form.Label>
             <InputGroup>
               <InputGroup.Text></InputGroup.Text>
-              <Form.Control autoFocus required type="number" placeholder="Amount" value={edittotalfees} onChange={(e) => setEdittotalfees(e.target.value)} />
+              <Form.Control  required type="number" placeholder="Amount" value={edittotalfees} onChange={(e) => setEdittotalfees(e.target.value)} />
             </InputGroup>
           </Form.Group>
           <Form.Group id="pname" className="mb-4">
             <Form.Label>Amount till Stage</Form.Label>
             <InputGroup>
               <InputGroup.Text></InputGroup.Text>
-              <Form.Control autoFocus required type="number" placeholder="Amount" value={editamounttst} onChange={(e) => setEditamounttst(e.target.value)} />
+              <Form.Control  required type="number" placeholder="Amount" value={editamounttst} onChange={(e) => setEditamounttst(e.target.value)} />
             </InputGroup>
           </Form.Group>
           <Form.Group id="pname" className="mb-4">
             <Form.Label>Amount Recieved</Form.Label>
             <InputGroup>
               <InputGroup.Text></InputGroup.Text>
-              <Form.Control autoFocus required type="number" placeholder="Amount" value={editamountrec} onChange={(e) => setEditamountrec(e.target.value)} />
+              <Form.Control  required type="number" placeholder="Amount" value={editamountrec} onChange={(e) => setEditamountrec(e.target.value)} />
             </InputGroup>
           </Form.Group>
           <Form.Group id="pname" className="mb-4">
@@ -905,9 +914,9 @@ export default () => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={(e) => handleEditSubmit(e)}>
+          {stop && <Button variant="primary" onClick={(e) => handleEditSubmit(e)}>
             Save Changes
-          </Button>
+          </Button>}
         </Modal.Footer>
       </Modal>
     </>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Route, Switch, Redirect } from "react-router-dom";
 import { Routes } from "../routes";
-
+import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
+import 'react-toastify/dist/ReactToastify.css';
 // pages
 import Upgrade from "./Upgrade";
 import DashboardOverview from "./dashboard/DashboardOverview";
+import DashBoard from './dashboard/DashBoard';
 import Transactions from "./Transactions";
 import Settings from "./Settings";
 import BootstrapTables from "./tables/BootstrapTables";
@@ -33,7 +35,7 @@ import DocsBuild from "./documentation/DocsBuild";
 import DocsChangelog from "./documentation/DocsChangelog";
 
 // components
-import Sidebar from "../components/Sidebar";
+import {Sidebar} from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Preloader from "../components/Preloader";
@@ -54,25 +56,33 @@ import Tables from "./components/Tables";
 import Tabs from "./components/Tabs";
 import Tooltips from "./components/Tooltips";
 import Toasts from "./components/Toasts";
+// tasks
 import createTasks from './Tasks/createTasks';
 import viewTasks from './Tasks/viewTasks';
+import Kanban from './Tasks/Kanban';
+
 import Testimonial from './Tasks/Testimonial';
 import Contact from './Contact/Contact';
 import viewContact from './Contact/viewContact';
 import Uploadblog from './Blog/Uploadblog';
 import Servises from './Services/Servises';
 // Invoices
-import CreateInvoice from './Billing/createBills'
-import viewBills from './Billing/viewBills'
 import CreateCredit from './Billing/createCredit'
+import CreateInvoice from './Billing/createInvoice'
+import CreateExpenses from './Billing/createExpenses'
+import CreateDinvoice from './Billing/createDebitInvoice'
+import CreateRecurring from './Billing/createRecurring';
+import viewBills from './Billing/viewBills'
+import viewDebits from './Billing/viewDebits'
+
 import CreateConsolidated from './Billing/createConsolidated'
 // Format
-import CreateTemplate from './format/createTemplate';
-import CreateFormat from './format/createformat';
-import ViewTemplate from './format/viewFeasibility';
+import CreateTemplate from './format/CreateFeasibility';
+import CreateFormat from './format/CreateFileTemplate';
+import ViewTemplate from './format/ViewTemplates';
 import Questions from './format/questions'
-import EditTemplate from './format/edittemplate';
-import EditFormat from './format/editformat';
+import EditFeasibility from './format/EditFeasibility';
+import EditFormat from './format/EditFileTemplate';
 import Watermark from './Tools/Watermark';
 
 
@@ -84,6 +94,8 @@ import viewRoutes from './Routes/viewRoutes';
 // Feasibility
 
 
+// Users
+import createUser from './Users/createUser';
 
 // Tools
 
@@ -93,6 +105,7 @@ import { hot } from 'react-hot-loader/root';
 // Create Correspondence
 import CreateCorrespondence from './correspondence/CreateCorrespondence'
 import viewCorrespondence from './correspondence/viewCorrespondence'
+import createRecurring from './Billing/createRecurring';
 
 const RouteWithLoader = ({ component: Component, ...rest }) => {
   const [loaded, setLoaded] = useState(false);
@@ -146,7 +159,7 @@ const RouteWithSidebar = ({ component: Component, ...rest }) => {
 const Homepage = () => (
   <Switch>
 
-
+  {/* <ToastContainer/> */}
     {<RouteWithLoader exact path={Routes.Signin.path} component={Signin} />}
     <RouteWithLoader exact path={Routes.Signup.path} component={Signup} />
     <RouteWithLoader exact path={Routes.ForgotPassword.path} component={ForgotPassword} />
@@ -156,7 +169,7 @@ const Homepage = () => (
     <RouteWithLoader exact path={Routes.ServerError.path} component={ServerError} />
 
     {/* pages */}
-    <RouteWithSidebar exact path={Routes.DashboardOverview.path} component={DashboardOverview} />
+    <RouteWithSidebar exact path={Routes.DashboardOverview.path} component={DashBoard} />
     <RouteWithSidebar exact path={Routes.Upgrade.path} component={Upgrade} />
     <RouteWithSidebar exact path={Routes.Transactions.path} component={Transactions} />
     <RouteWithSidebar exact path={Routes.Settings.path} component={Settings} />
@@ -171,6 +184,10 @@ const Homepage = () => (
 
     <RouteWithSidebar exact path={Routes.CreateTasks.path} component={createTasks} />
     <RouteWithSidebar exact path={Routes.ViewTasks.path} component={viewTasks} />
+    <RouteWithSidebar exact path={Routes.Kanban.path} component={Kanban} />
+
+
+    <RouteWithSidebar exact path={Routes.CreateBucket.path} component={createBucket} />
     <RouteWithSidebar exact path={Routes.Testimonial.path} component={Testimonial} />
     <RouteWithSidebar exact path={Routes.Contact.path} component={Contact} />
     <RouteWithSidebar exact path={Routes.ViewContacts.path} component={viewContact} />
@@ -224,7 +241,11 @@ const Homepage = () => (
     {/* Invoices */}
     <RouteWithSidebar exact path={Routes.CreateInvoice.path} component={CreateInvoice} />
     <RouteWithSidebar exact path={Routes.CreateCredit.path} component={CreateCredit} />
+    <RouteWithSidebar Exact path={Routes.CreateDinvoice.path} component={CreateDinvoice} />
+    <RouteWithSidebar exact path={Routes.CreateExpenses.path} component={CreateExpenses} />
+    <RouteWithSidebar exact path={Routes.CreateRecurring.path} component={CreateRecurring} />
     <RouteWithSidebar exact path={Routes.viewBills.path} component={viewBills} />
+    <RouteWithSidebar exact path={Routes.viewDebits.path} component={viewDebits} />
     <RouteWithSidebar exact path={Routes.createConsolidated.path} component={CreateConsolidated} />
 
 
@@ -233,13 +254,16 @@ const Homepage = () => (
     <RouteWithSidebar exact path={Routes.CreateFormat.path} component={CreateFormat} />
     <RouteWithSidebar exact path={Routes.Questions.path} component={Questions} />
     <RouteWithSidebar exact path={Routes.ViewTemplate.path} component={ViewTemplate} />
-    <RouteWithSidebar exact path={Routes.EditTemplate.path} component={EditTemplate} />
+    <RouteWithSidebar exact path={Routes.EditFeasibility.path} component={EditFeasibility} />
     <RouteWithSidebar exact path={Routes.EditFormat.path} component={EditFormat} />
     <RouteWithSidebar exact path={Routes.AddWatermark.path} component={Watermark} />
     <RouteWithLoader exact path={Routes.AddWatermarks.path} component={Watermark} />
 
     {/* Routes  */}
     <RouteWithSidebar exact path={Routes.viewRoutes.path} component={viewRoutes} />
+
+    {/* User */}
+    <RouteWithSidebar exact path={Routes.createUser.path} component={createUser} />
 
 
    

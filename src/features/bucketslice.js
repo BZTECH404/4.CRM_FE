@@ -7,7 +7,9 @@ const initialState = {
   buckets: [],
   bucket: null,
   loading: false,
-  error: null
+  error: null,
+  trigger:false,
+  today:[]
 };
 
 const bucketSlice = createSlice({
@@ -43,6 +45,13 @@ const bucketSlice = createSlice({
     fetchDataFailure(state, action) {
       state.loading = false;
       state.error = action.payload;
+    },
+    setTrigger(state) {
+      console.log("trigger")
+      state.trigger = !state.trigger; // Toggle trigger state
+    },
+    setToday(state,action){
+      state.today = action.payload;
     }
   }
 });
@@ -54,7 +63,9 @@ export const {
   fetchBucketByIdSuccess,
   updateBucketSuccess,
   deleteTaskSuccess,
-  fetchDataFailure
+  fetchDataFailure,
+  setTrigger,
+  setToday
 } = bucketSlice.actions;
 
 // Thunks for async logic
@@ -103,10 +114,11 @@ export const updateBucket = (userId, bucketId, bucketData) => async (dispatch) =
 export const deleteTaskFromBucket = (userId, bucketId, taskId) => async (dispatch) => {
   dispatch(fetchDataStart());
   try {
-    await axios.delete(`${baseurl}/bucket/buckets/${userId}/${bucketId}/${taskId}`);
-    // toast.success("Task deleted successfully");
+    await axios.put(`${baseurl}/bucket/buckets/${userId}/${bucketId}/${taskId}`);
+    toast.success("Task deleted successfully");
     dispatch(deleteTaskSuccess({ userId, bucketId, taskId })); 
   } catch (error) {
+    console.log(error)
     toast.error("Error deleting task from bucket");
     dispatch(fetchDataFailure(error.message));
   }

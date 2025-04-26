@@ -8,7 +8,7 @@ import axios from "axios";
 import { baseurl } from "../../api";
 import { check } from "../../checkloggedin"
 
-export default () => {
+export default ({fromdashboard}) => {
     const [data, setData] = useState([]);
     const [taskId, setTaskId] = useState(''); // For storing the selected task ID
     const [pname, setPname] = useState('');

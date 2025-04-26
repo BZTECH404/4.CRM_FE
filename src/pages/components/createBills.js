@@ -414,7 +414,7 @@ export default () => {
                         <Form.Label>Creation Date</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Control autoFocus required type="date" placeholder="Amount" value={createdate} onChange={(e) => setCreateDate(e.target.value)} />
+                          <Form.Control  required type="date" placeholder="Amount" value={createdate} onChange={(e) => setCreateDate(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -508,7 +508,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="text" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
+                          <Form.Control  required type="text" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -518,7 +518,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                          <Form.Control  required type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -567,7 +567,7 @@ export default () => {
                       <Form.Group id="Taskdescription" className="mb-4">
                         <Form.Label>Invoice Description</Form.Label>
                         <InputGroup>
-                          <textarea autoFocus required rows="4" cols="60" type="textarea" placeholder="Task Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                          <textarea  required rows="4" cols="60" type="textarea" placeholder="Task Description" value={description} onChange={(e) => setDescription(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>

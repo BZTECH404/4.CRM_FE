@@ -13,7 +13,7 @@ const initialState = {
 };
 
 const datasSlice = createSlice({
-  name: 'contacts',
+  name: 'contac',
   initialState,
   reducers: {
     fetchDataStart(state) {
@@ -42,6 +42,7 @@ export const getcontacts = () => async (dispatch) => {
 
 
     dispatch(fetchDataSuccess(sortedData));
+    return sortedData
   } catch (error) {
     dispatch(fetchDataFailure(error.message));
   }

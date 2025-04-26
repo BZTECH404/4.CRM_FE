@@ -11,7 +11,10 @@ import billReducer from './features/billslice'
 import consolidatedReducer from './features/consolidatedSlice';
 import questionReducer from './features/questionslice';
 import correspondenceReducer from './features/correspondenceSlice';
-
+import filetemplatesReducer from './features/filetemplateslice';
+import expenseInvoiceReducer from './features/expenseInvoiceSlice'
+import expenseReducer from './features/expenseSlice'
+import bucketReducer from './features/bucketslice';
 const store = configureStore({
   reducer: {
     users: userReducer,
@@ -23,7 +26,11 @@ const store = configureStore({
     bill:billReducer,
     consolidatedSlice:consolidatedReducer,
     questionSlice:questionReducer,
-    correspondence:correspondenceReducer
+    correspondence:correspondenceReducer,
+    filetemplates:filetemplatesReducer,
+    expenseInvoices:expenseInvoiceReducer,
+    expense:expenseReducer,
+    bucket: bucketReducer
 
   },
 });

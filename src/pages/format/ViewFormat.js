@@ -21,6 +21,7 @@ const viewFeasibility = () => {
   }, []);
 
   return (
+    
     <div style={{display: "flex", gap: "200px", padding: "20px",border:"1px solid red"}}>
     <div style={{width:"57%",border:"1px solid red"}}>
     <table responsive  className="align-items-center table-flush">

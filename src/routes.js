@@ -25,9 +25,6 @@
 //     NotFound: { path: "/examples/404" },
 //     ServerError: { path: "/examples/500" },
 
-import createConsolidated from "./pages/Billing/createConsolidated";
-import CreateFormat from "./pages/format/createformat";
-
 //     // docs
 //     DocsOverview: { path: "/documentation/overview" },
 //     DocsDownload: { path: "/documentation/download" },
@@ -77,6 +74,7 @@ export const Routes = {
     // Tasks
     CreateTasks: {path: "/tasks/createTasks"},
     ViewTasks: {path: "/tasks/viewTasks"},
+    Kanban:{path:"/tasks/kanban"},
 
     // Buckets
     CreateBucket: {path: "/buckets/createBucket"},
@@ -142,16 +140,26 @@ export const Routes = {
     // Finance
     CreateInvoice:{path:'/billing/createinvoice'},
     CreateCredit:{path:'/billing/createBill'},
+    CreateDinvoice:{path:"/billing/createDinvoice"},
+    CreateExpenses:{path:"/billing/createExpenses"},
+    CreateRecurring:{path:"/billing/createRecurring"},
     viewBills:{path:'/billing/viewBills'},
+    viewDebits:{path:"/billing/viewDebits"},
     createConsolidated:{path:"/billing/createConsolidated"},
-    
+    viewConsolidated:{path:"/billing/viewConsolidated"},
+
     // Credit
 
     // Format
+    // CreateFeasibility
     CreateTemplate:{path:"/feasibility/createTemplate"},
+    // CreateFileTemplate
     CreateFormat:{path:'/format/create'},
-    ViewTemplate:{path:"/feasibility/viewTemplate"},
-    EditTemplate:{path:"/feasibility/:id"},
+
+    ViewTemplate:{path:"/format/viewTemplate"},
+    // EditFeasibility
+    EditFeasibility:{path:"/feasibility/:id"},
+    // EditFeasibility
     EditFormat:{path:"/format/:id"},
     AddWatermark:{path:"/tools/addWatermark"},
     AddWatermarks:{path:"/tools/addWatermarks"},
@@ -159,7 +167,11 @@ export const Routes = {
     Questions:{path:'/format/questions'},
 
     // Routes
-    viewRoutes:{path:'/routes/viewRoutes'}
+    viewRoutes:{path:'/routes/viewRoutes'},
+
+    // User
+    createUser:{path:"/user/createUser"},
+    viewUser:{path:"/user/viewUser"},
     
 
 

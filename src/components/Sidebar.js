@@ -4,7 +4,7 @@ import SimpleBar from 'simplebar-react';
 import { useLocation } from "react-router-dom";
 import { CSSTransition } from 'react-transition-group';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faBoxOpen, faChartPie, faCog, faFileAlt, faHandHoldingUsd, faSignOutAlt, faTable, faTimes, faCalendarAlt, faMapPin, faInbox, faRocket, faDesktop, faSignInAlt, faSign, faSignLanguage, faSortNumericDownAlt, faHome, faInfo, faPhone, faQuran } from "@fortawesome/free-solid-svg-icons";
+import { faBook, faBoxOpen, faChartPie, faCog, faArrowRight, faFileAlt, faHandHoldingUsd, faSignOutAlt, faTable, faTimes, faCalendarAlt, faMapPin, faInbox, faRocket, faDesktop, faSignInAlt, faSign, faSignLanguage, faSortNumericDownAlt, faHome, faInfo, faPhone, faQuran, faUserAltSlash, faUser, faUserCheck } from "@fortawesome/free-solid-svg-icons";
 import { Nav, Badge, Image, Button, Dropdown, Accordion, Navbar } from '@themesberg/react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useHistory } from 'react-router-dom';
@@ -15,7 +15,7 @@ import ProfilePicture from "../assets/img/team/profile-picture-3.jpg";
 import { faBitbucket, faPhoenixFramework } from "@fortawesome/free-brands-svg-icons";
 import { check } from '../checkloggedin.js';
 
-export default (props = {}) => {
+export const Sidebar = (props = {}) => {
 
   const location = useLocation();
   const { pathname } = location;
@@ -94,12 +94,12 @@ export default (props = {}) => {
                 <div className="d-block">
                   <h6>{check()[1]}</h6>
                 </div>
+                <Nav.Link style={{ color: "black", marginLeft: "50px" }} className="collapse-close d-md-none" onClick={onCollapse}>
+                  Exit Nav
+                </Nav.Link>
               </div>
-              <Nav.Link className="collapse-close d-md-none" onClick={onCollapse}>
-                <FontAwesomeIcon icon={faTimes} />
-              </Nav.Link>
             </div>
-            <Nav className="flex-column pt-3 pt-md-0">
+            <Nav style={{ border: "1px solid grey", height: "max-content", marginBottom: "30px", borderRadius: "30px" }} className="flex-column pt-3 pt-md-0">
               <NavItem title="Bhole Consultants" link={Routes.DashboardOverview.path} image={ReactHero} />
 
 
@@ -122,6 +122,8 @@ export default (props = {}) => {
 
                 <NavItem title="Create Tasks" link={Routes.CreateTasks.path} />
                 <NavItem title="View Tasks" link={Routes.ViewTasks.path} />
+                <NavItem title="Kanban" link={Routes.Kanban.path} />
+
                 {/* <NavItem title="Testimonial" link={Routes.Testimonial.path} /> */}
               </CollapsableNavItem>
 
@@ -142,21 +144,29 @@ export default (props = {}) => {
 
                 <NavItem title="Create Invoice" link={Routes.CreateInvoice.path} icon={faInfo} />
                 <NavItem title="Create Credit" link={Routes.CreateCredit.path} icon={faInfo} />
+                <NavItem title="Create Dinvoice" link={Routes.CreateDinvoice.path} icon={faInfo} />
+                <NavItem title="Create Expenses" link={Routes.CreateExpenses.path} icon={faInfo} />
+                <NavItem title="Create Recurring" link={Routes.CreateRecurring.path} icon={faInfo} />
                 <NavItem title="View Bills" link={Routes.viewBills.path} icon={faInfo} />
+                <NavItem title="View Debits" link={Routes.viewDebits.path} icon={faInfo} />
                 <NavItem title="Consolidated" link={Routes.createConsolidated.path} icon={faInfo} />
+                {/* <NavItem title="View Consolidated" link={Routes.viewConsolidated.path} icon={faInfo} /> */}
+
                 {/* <NavItem title="Testimonial" link={Routes.Testimonial.path} /> */}
+
               </CollapsableNavItem>
 
-                {/* Format */}
+              {/* Format */}
               <CollapsableNavItem eventKey="examples/" title="Format" icon={faBook}>
                 <NavItem title="Create XL" link={Routes.CreateTemplate.path} icon={faBoxOpen} />
                 <NavItem title="Create Template" link={Routes.CreateFormat.path} icon={faBoxOpen} />
                 <NavItem title="View Template" link={Routes.ViewTemplate.path} icon={faBoxOpen} />
                 <NavItem title="Add Watermark" link={Routes.AddWatermark.path} icon={faBoxOpen} />
+                <NavItem title="Add Question" link={Routes.Questions.path} icon={faBoxOpen} />
               </CollapsableNavItem>
 
 
-                
+
               <CollapsableNavItem eventKey="examples/" title="Correspondence" icon={faBook}>
 
 
@@ -177,6 +187,15 @@ export default (props = {}) => {
 
 
                 <NavItem title="View Routes" link={Routes.viewRoutes.path} icon={faBoxOpen} />
+
+              </CollapsableNavItem>
+
+              <CollapsableNavItem eventKey="examples/" title="Users" icon={faUser}>
+
+
+                <NavItem title="Create User" link={Routes.createUser.path} icon={faUserCheck} />
+                {/* <NavItem title="View Users" link={Routes.viewUsers.path} icon={faUserCheck} /> */}
+
                 {/* <NavItem title="View" link={Routes.ViewBucket.path} icon={faChartPie} /> */}
                 {/* <NavItem title="Testimonial" link={Routes.Testimonial.path} /> */}
               </CollapsableNavItem>
@@ -198,8 +217,11 @@ export default (props = {}) => {
               <Button onClick={() => {
                 localStorage.removeItem('token');
                 history.push("/sign-in");
-              }} variant="secondary" className="upgrade-to-pro"><FontAwesomeIcon icon={faSignOutAlt} className="me-1" />Logout</Button>
+              }} variant="secondary"
+              //  className="upgrade-to-pro"
+               ><FontAwesomeIcon icon={faSignOutAlt} className="me-1" />Logout</Button>
             </Nav>
+
           </div>
         </SimpleBar>
       </CSSTransition>

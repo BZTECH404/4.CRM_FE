@@ -16,7 +16,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter } from "react-router-dom";
-
+import { ToastContainer, toast } from 'react-toastify/dist/react-toastify.cjs.development';
+import 'react-toastify/dist/ReactToastify.css';
 // core styles
 import "./scss/volt.scss";
 
@@ -31,6 +32,7 @@ import { Provider } from 'react-redux';
 
 ReactDOM.render(
   <HashRouter>
+    <ToastContainer />
     <Provider store={store}>
     <ScrollToTop />
     <HomePage />

@@ -188,7 +188,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus required type="text" placeholder="Service Name" value={serviceName} onChange={(e) => setServiceName(e.target.value)} />
+                          <Form.Control  required type="text" placeholder="Service Name" value={serviceName} onChange={(e) => setServiceName(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>

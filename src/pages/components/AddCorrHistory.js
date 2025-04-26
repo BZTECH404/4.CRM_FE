@@ -145,7 +145,7 @@ export default ({corr,showModal2,setShowModal2}) => {
             <Form.Group  id="Taskdescription" className="mb-4">
                     <Form.Label>Description</Form.Label>
                     <InputGroup>
-                        <textarea autoFocus rows="5" style={{width:"100%"}}  type="textarea" placeholder="Description"value={texthistory} onChange={(e) => setaddtexthistory(e.target.value)} />
+                        <textarea  rows="5" style={{width:"100%"}}  type="textarea" placeholder="Description"value={texthistory} onChange={(e) => setaddtexthistory(e.target.value)} />
                     </InputGroup>
             </Form.Group>
             {/* File Name */}

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome } from "@fortawesome/free-solid-svg-icons";
-import { Breadcrumb, Col, Row, Button, Container, Table, Modal, Form, InputGroup } from '@themesberg/react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllBuckets, deleteTaskFromBucket } from "../../features/bucketslice";  // Import your action
@@ -11,8 +10,11 @@ import { baseurl, ProjectStatus, companies } from "../../api";
 import { check } from "../../checkloggedin"
 import { fetchProjects } from "../../features/projectslice";
 import { fetchAsyncData } from '../../features/userslice'
+import { Breadcrumb, Col, Row, Form, Card, Button, Table, Container, InputGroup, Modal, Tab, Nav } from '@themesberg/react-bootstrap';
+import { setToday } from "../../features/bucketslice";
 
-export default () => {
+
+const Comp = ({ fromdashboard }) => {
   const dispatch = useDispatch();
   const [buckets, setBuckets] = useState([]);  // Initialize buckets state
   const [showModal, setShowModal] = useState(false);
@@ -23,7 +25,7 @@ export default () => {
   const [data, setData] = useState([]);
   const [newTasks, setNewTasks] = useState([]); // New state to handle selected tasks
   const [companyname, setCompanyName] = useState('')
-  const [people, setPeople] = useState('')
+  const [people, setPeople] = useState(check()[0]);
   const [pnamearr, setPnamearr] = useState([]);
   const [isActive, setIsActive] = useState(null)
   const [users, setUsers] = useState([]);
@@ -32,7 +34,9 @@ export default () => {
   const Today = new Date().toISOString().split("T")[0];
   const [createdate, setCreateDate] = useState(Today)
   const [project, setProject] = useState(null)
+  const [trigger1, setTrigger1] = useState(false)
 
+  const trigger = useSelector(state => state.bucket.trigger);
 
   const { user1 } = useSelector((state) => state.users);
 
@@ -54,17 +58,24 @@ export default () => {
   }, [dispatch, companyname, isActive]);
 
 
+
   useEffect(() => {
-    const fetchBuckets = async () => {
-      try {
-        const fetchedBuckets = await dispatch(getAllBuckets());  // Await the dispatch to get the data
-        setBuckets(fetchedBuckets);   // Set the fetched buckets to local state
-      } catch (error) {
-        toast.error("Error fetching buckets");
+
+
+    dispatch(getAllBuckets()).then((res) => {
+      const today = res.filter(bucket => new Date(bucket.date).toLocaleDateString() === new Date(Today).toLocaleDateString() &&
+      bucket.user._id == check()[0])
+      if(today.length>0){
+      dispatch(setToday(today[today.length-1].tasks))
       }
-    };
-    fetchBuckets();  // Call the fetch function
-  }, [dispatch]);
+      console.log(today)
+      setBuckets(res);   // Set the fetched buckets to local state
+
+    })  // Await the dispatch to get the data
+
+
+
+  }, [trigger, trigger1]);
 
   useEffect(() => {
     (async () => {
@@ -100,6 +111,18 @@ export default () => {
     // Dispatch deleteTaskFromBucket action to remove the task from the backend
     if (selectedBucket) {
       dispatch(deleteTaskFromBucket(selectedBucket.user._id, selectedBucket._id, taskId));
+
+    }
+    // setShowModal(false);
+    setFilteredBuckets(buckets);
+  };
+
+
+  const handleDeleteTasks = (userid, bucketid, taskId) => {
+
+    // Dispatch deleteTaskFromBucket action to remove the task from the backend
+    if (selectedBucket) {
+      dispatch(deleteTaskFromBucket(userid, bucketid, taskId));
 
     }
     // setShowModal(false);
@@ -194,7 +217,7 @@ export default () => {
         </div>
       </div>
       <form onSubmit={handleFilterBuckets}>
-        <Form.Group id="people" className="mb-4">
+        {!fromdashboard && (<Form.Group id="people" className="mb-4">
           <Form.Label>People</Form.Label>
           <InputGroup>
             <InputGroup.Text></InputGroup.Text>
@@ -205,33 +228,107 @@ export default () => {
               ))}
             </Form.Select>
           </InputGroup>
-        </Form.Group>
-        <Form.Group id="pname" className="mb-4">
+        </Form.Group>)}
+        {!fromdashboard && (<><Form.Group id="pname" className="mb-4">
           <Form.Label>Date</Form.Label>
           <InputGroup>
             <InputGroup.Text></InputGroup.Text>
-            <Form.Control autoFocus type="date" placeholder="date" value={createdate} onChange={(e) => setCreateDate(e.target.value)} />
+            <Form.Control type="date" placeholder="date" value={fromdashboard ? new Date().toISOString().split("T")[0] : createdate} onChange={(e) => setCreateDate(e.target.value)} />
           </InputGroup>
         </Form.Group>
-        <Button style={{ height: "70%" }} variant="primary" type="submit" className="w-100 mt-3">
-          Submit
-        </Button>
+          <Button style={{ height: "70%" }} variant="primary" type="submit" className="w-100 mt-3">
+            Submit
+          </Button>
+        </>)
+        }
       </form>
       <section className="d-flex align-items-center my-2 mt-lg-3 mb-lg-5">
-        <Container>
-          <h4 className="mb-4">Bucket List</h4>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Date</th>
-                <th>User</th>
-                <th>Tasks</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBuckets.map((bucket, index) => (
+        <Container style={{ width: "100%" }}>
+          <Card style={{ width: '100%' }} border="light" className="shadow-sm">
+            <Card.Header>
+              <Row style={{ width: "100%" }} className="align-items-center">
+                <Col>
+                  <h5>Tasks List</h5>
+                </Col>
+                <Col style={{ width: "100%" }} className="text-end">
+                </Col>
+              </Row>
+            </Card.Header>
+
+
+
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th >Tasks</th>
+
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                {users?.map((option, index) => {
+                  return (
+                    <>
+                      {buckets?.filter(bucket => bucket.user._id === option._id &&
+                        (!people || bucket.user._id === people) &&
+                        (!fromdashboard ? (new Date(bucket.date).toLocaleDateString() === new Date(Today).toLocaleDateString()) : (!createdate || new Date(bucket.date).toLocaleDateString() === new Date(createdate).toLocaleDateString()))
+                      ).map((bucket, index) => (
+                        <>
+                          {bucket.tasks.map((task, taskIndex) => (
+                            <tr key={task._id}>
+                              <td>{index + 1}</td>
+                              <td>{new Date(bucket.date).toLocaleDateString()}</td>
+                              <td>{bucket.user.username}</td>
+                              <td style={{ maxWidth: "200px" }}>
+                                <pre style={{ whiteSpace: "pre-wrap" }}>{task.taskSubject}
+                                  {findprojectname(task.projectid)} - {task.projectName}
+                                </pre>
+
+
+                              </td>
+                              <td>
+
+                                <Button variant="danger" className="me-2" onClick={(e) => {
+                                  e.preventDefault();
+                                  dispatch(deleteTaskFromBucket(option._id, bucket._id, task._id)).then((res) => {
+                                    setTrigger1(!trigger1)
+                                  })
+
+                                }
+
+                                } >
+                                  Delete
+                                </Button>
+                                <Button
+                                  style={{ color: "white" }}
+                                  onClick={(e) => {
+                                    handleComplete(task._id, task.taskCompleted)
+                                    switchstatus(bucket, task._id)
+                                    ////////console.log(task.taskCompleted)
+                                  }}
+                                >
+                                  {task.taskCompleted ? "Mark Incomplete" : "Mark Complete"}
+                                </Button>
+
+                                {(check()[1]=="john_doe" || check()[1]=="pbhole" || check()[1]=="mbhole") && (<Button variant="primary" onClick={() => handleEdit(bucket)} className="me-2">
+                                  Edit
+                                </Button>)}
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      ))}
+                    </>
+                  );
+                })}
+
+
+
+                {/* {filteredBuckets.map((bucket, index) => (
                 <tr key={bucket._id}>
                   <td>{index + 1}</td>
                   <td>{new Date(bucket.date).toLocaleDateString()}</td>
@@ -252,11 +349,14 @@ export default () => {
                     </Button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              ))} */}
+              </tbody>
+            </Table>
+          </Card>
+
         </Container>
       </section>
+
 
       {/* Modal for Editing Bucket */}
       <Modal show={showModal} onHide={handleCloseModal}>
@@ -338,3 +438,4 @@ export default () => {
     </>
   );
 };
+export default Comp

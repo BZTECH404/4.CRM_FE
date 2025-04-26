@@ -196,7 +196,7 @@ export default () => {
                                                             <InputGroup>
                                                                 <InputGroup.Text>
                                                                 </InputGroup.Text>
-                                                                <Form.Control autoFocus required type="text" placeholder="heading" value={heading} onChange={(e) => setHeading(e.target.value)} />
+                                                                <Form.Control  required type="text" placeholder="heading" value={heading} onChange={(e) => setHeading(e.target.value)} />
                                                             </InputGroup>
                                                         </Form.Group>
                                                     </Col>
@@ -206,7 +206,7 @@ export default () => {
                                                             <InputGroup>
                                                                 <InputGroup.Text>
                                                                 </InputGroup.Text>
-                                                                <Form.Control autoFocus required type="text" placeholder="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                                                                <Form.Control  required type="text" placeholder="date" value={date} onChange={(e) => setDate(e.target.value)} />
                                                             </InputGroup>
                                                         </Form.Group>
                                                     </Col>
@@ -241,7 +241,7 @@ export default () => {
                                                             <InputGroup>
                                                                 <InputGroup.Text>
                                                                 </InputGroup.Text>
-                                                                <Form.Control autoFocus required type="text" placeholder="Tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} />
+                                                                <Form.Control  required type="text" placeholder="Tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} />
                                                             </InputGroup>
                                                         </Form.Group>
                                                     </Col>

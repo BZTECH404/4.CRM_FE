@@ -79,7 +79,7 @@ export default () => {
                         <FontAwesomeIcon icon={faEnvelope} />
                       </InputGroup.Text>
                       {/* type="email" */}
-                      <Form.Control autoFocus required placeholder="example@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <Form.Control  required placeholder="example@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     </InputGroup>
                   </Form.Group>
                   <Form.Group>

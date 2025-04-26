@@ -72,7 +72,7 @@ export default () => {
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faEnvelope} />
                       </InputGroup.Text>
-                      <Form.Control  autoFocus required value={email} type="email" placeholder="example@company.com" onChange={(e) => setEmail(e.target.value)}/>
+                      <Form.Control   required value={email} type="email" placeholder="example@company.com" onChange={(e) => setEmail(e.target.value)}/>
                     </InputGroup>
                   </Form.Group>
                   <Form.Group id="email" className="mb-4">
@@ -81,7 +81,7 @@ export default () => {
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faEnvelope} />
                       </InputGroup.Text>
-                      <Form.Control autoFocus required value={username} type="text" placeholder="Username" onChange={(e) => setUsername(e.target.value)}/>
+                      <Form.Control  required value={username} type="text" placeholder="Username" onChange={(e) => setUsername(e.target.value)}/>
                     </InputGroup>
                   </Form.Group>
                   <Form.Group id="password" className="mb-4">

@@ -430,7 +430,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
                           <Form.Control
-                            autoFocus
+                            
                             required
                             type="date"
                             placeholder="Amount"
@@ -466,7 +466,7 @@ export default () => {
                         <Form.Label>Letter No</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Control autoFocus type="text" placeholder="Task Subject" value={letterno} onChange={(e) => setletterno(e.target.value)} />
+                          <Form.Control  type="text" placeholder="Task Subject" value={letterno} onChange={(e) => setletterno(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -477,7 +477,7 @@ export default () => {
                         <Form.Label>Subject</Form.Label>
                         <InputGroup>
                           <InputGroup.Text></InputGroup.Text>
-                          <Form.Control autoFocus type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
+                          <Form.Control  type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -487,7 +487,7 @@ export default () => {
                         <Form.Group id="Taskdescription" className="mb-4">
                           <Form.Label>Description</Form.Label>
                           <InputGroup>
-                            <textarea autoFocus rows="2" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
+                            <textarea  rows="2" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
                           </InputGroup>
                         </Form.Group>
                       </Col>
@@ -532,7 +532,7 @@ export default () => {
                           <Form.Select required value={type} onChange={(e) => setType(e.target.value)}>
                             <option value="">Select Option</option>
                             {Type.map((type, index) => (
-                              <option key={index} value={type} autoFocus>
+                              <option key={index} value={type} >
                                 {type}
                               </option>
                             ))}

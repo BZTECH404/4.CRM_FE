@@ -27,7 +27,7 @@ export default () => {
                   <div className="mb-4">
                     <Form.Label htmlFor="email">Your Email</Form.Label>
                     <InputGroup id="email">
-                      <Form.Control required autoFocus type="email" placeholder="john@company.com" />
+                      <Form.Control required  type="email" placeholder="john@company.com" />
                     </InputGroup>
                   </div>
                   <Button variant="primary" type="submit" className="w-100">

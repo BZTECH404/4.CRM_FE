@@ -130,7 +130,7 @@ const ViewCorrHistory = ({ resett,id, history, setHistory, showModal1, setShowMo
                   <tr key={row._id}>
                     <td style={{ maxWidth: "100px", cursor: "pointer" }}>
                       {editmode ? (<>
-                        <Form.Control autoFocus required type="text" placeholder="Project Name" value={row.order} onChange={(e) => handleeditorder(row._id, e.target.value)} />
+                        <Form.Control  required type="text" placeholder="Project Name" value={row.order} onChange={(e) => handleeditorder(row._id, e.target.value)} />
                       </>) : (<p>{row.order}</p>)}
                     </td>
                     <td>{row.date}</td>

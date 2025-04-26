@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fortawesome/free-solid-svg-icons";
@@ -12,11 +12,11 @@ import { useHistory } from 'react-router-dom';
 import { check } from '../../checkloggedin'
 import Multiselect from "../../components/Multiselect";
 import { fetchProjects } from "../../features/projectslice";
+import {dateinIndia, timeinIndia} from '../../checkloggedin'
+const Comp = ({ ptbf, handleFetch }) => {
 
-export default () => {
-
+  const inputRef = React.useRef(null);
   const [imageUrl, setImageUrl] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(0);
   const [clickedImage, setClickedImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -50,16 +50,17 @@ export default () => {
   // for this file only
   const [users, setUsers] = useState([])
   const [username, setUsername] = useState('')
-  const [pname, setPname] = useState('')
+  const [pname, setPname] = useState(ptbf ? ptbf : "")
   const [pnamearr, setPnamearr] = useState([])
   const [tasksubject, setTaskSubject] = useState('')
   const [taskdescription, setTaskdescription] = useState('')
   const [assignedby, setassignedby] = useState('')
   const [selectedusers, setSelectedusers] = useState([])
-
+  const [name, setName] = useState('')
   const token = localStorage.getItem('token');
-
-
+  const Today = new Date().toISOString().split("T")[0];
+  const [deadline, setDeadline] = useState(null)
+  const [editFileDate, setEditFileDate] = useState('');
   // project filtering
   let [isActive, setIsActive] = useState(null);
   let [companyname, setCompanyName] = useState('')
@@ -134,12 +135,15 @@ export default () => {
 
         const ids = selectedusers.map(user => user.id);
         const body = {
+          CreatedAt: Date.now(),
           projectid: pname,
           assignTaskTo: ids,
-          assignedby:check()[0],
-          taskSubject: tasksubject,
-          taskDescription: taskdescription,
-          taskUrl: selectedFile ? getPredefinedUrl(key) : "hello"
+          assignedby: check()[0],
+          taskSubject: tasksubject.trim(),
+          taskDescription: taskdescription.trim(),
+          deadline: deadline,
+
+          // taskUrl: selectedFile ? getPredefinedUrl(key) : "hello"
         };
         ////////////////////console.log(body)
         // Example: Posting additional form data using Axios
@@ -149,13 +153,15 @@ export default () => {
         //     'Content-Type': 'multipart/form-data', // Set appropriate content type
         //   },
         // });
-        const responseFormData = await axios.post(`${baseurl}/task/create`, body);
+        await axios.post(`${baseurl}/task/create`, body).then((resp) => {
+          toast.success('Task added successfully'); // Call toast.success after successful addition
+          handleFetch()
+        })
         ////////////////////console.log(responseFormData);
-        toast.success('Task added successfully'); // Call toast.success after successful addition
         // window.location.reload()
         setSelectedFile(null)
       } catch (error) {
-        //console.error(error);
+        // console.log(error);
         // Assuming res is not defined, use //console.error instead
         //console.error({ message: "backend error", data: error });
       }
@@ -299,7 +305,6 @@ export default () => {
 
   return (
     <>
-      <ToastContainer />
       <div className="d-xl-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-2">
         <div className="d-block mb-4 mb-xl-0">
           <Breadcrumb className="d-none d-md-inline-block" listProps={{ className: "breadcrumb-dark breadcrumb-transparent" }}>
@@ -319,11 +324,11 @@ export default () => {
         </Nav>
         <Tab.Content>
           <Tab.Pane eventKey="home" className="py-4">
-            <section className="d-flex align-items-center my-2 mt-lg-3 mb-lg-5">
-              <Container>
+            <section className="d-flex align-items-center my-2 mt-lg-1 mb-lg-5">
+              <Container style={{ width: "70%" }}>
                 <form onSubmit={(e) => handleUpload(e)}>
                   <Row >
-                    <Col xs={12} md={4}>
+                    <Col xs={12} md={6}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Company Name</Form.Label>
                         <InputGroup>
@@ -341,7 +346,7 @@ export default () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                    <Col xs={12} md={4}>
+                    <Col xs={12} md={6}>
                       <Form.Group id="taskstatus" className="mb-4">
                         <Form.Label>Project Status</Form.Label>
                         <InputGroup>
@@ -360,7 +365,29 @@ export default () => {
                         </InputGroup>
                       </Form.Group>
                     </Col>
-                    <Col xs={12} md={6}>
+                    <Col xs={12} md={3}>
+                      <>
+                        {/* <Form.Group id="taskstatus" className="mb-4"> */}
+                        <Form.Label>Project Search</Form.Label>
+                        <Form.Group controlId="editFileName">
+                          <Form.Control
+                            ref={inputRef}
+                            type="text"
+                            placeholder="Project Name"
+                            value={name}
+                            onChange={(e) => {
+                              setName(e.target.value)
+                              setTimeout(() => {
+                                inputRef.current?.focus(); // Retains focus without autofocus
+                              }, 0);
+                            }
+                            }
+                          />
+                          {/* </InputGroup> */}
+                        </Form.Group>
+                      </>
+                    </Col>
+                    <Col xs={12} md={3}>
                       <Form.Group id="pname" className="mb-4">
                         <Form.Label>Project name</Form.Label>
                         <InputGroup>
@@ -369,7 +396,12 @@ export default () => {
                           <Form.Select value={pname} onChange={(e) => setPname(e.target.value)}>
                             <option value="">Select Option</option>
                             {/* Mapping through the arr array to generate options */}
-                            {pnamearr.map((option, index) => (
+                            {pnamearr.filter((project) =>
+                              (companyname === "" || project.company === companyname) &&
+                              // (regu === "" || project.regu === regu) &&
+                              // (isDisabled === "" || project.isDisabled === isDisabled)
+                              ((new RegExp(name, 'i')).test(project.name))
+                            ).map((option, index) => (
                               <option key={index} value={option._id}>{option.name}</option>
                             ))}
                           </Form.Select>
@@ -383,7 +415,7 @@ export default () => {
                         <InputGroup>
                           <InputGroup.Text>
                           </InputGroup.Text>
-                          <Form.Control autoFocus type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
+                          <Form.Control required type="text" placeholder="Task Subject" value={tasksubject} onChange={(e) => setTaskSubject(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
@@ -391,12 +423,12 @@ export default () => {
                       <Form.Group id="Taskdescription" className="mb-4">
                         <Form.Label>Task Description</Form.Label>
                         <InputGroup>
-                          <textarea autoFocus rows="4" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
+                          <textarea rows="4" cols="60" type="textarea" placeholder="Task Description" value={taskdescription} onChange={(e) => setTaskdescription(e.target.value)} />
                         </InputGroup>
                       </Form.Group>
                     </Col>
 
-                    <Col xs={12} md={6}>
+                    {/* <Col xs={12} md={6}>
                       <Form.Group id="Project Image" className="mb-4">
                         <Form.Label>Task Image if Required</Form.Label>
                         <InputGroup>
@@ -409,7 +441,7 @@ export default () => {
                           />
                         </InputGroup>
                       </Form.Group>
-                    </Col>
+                    </Col> */}
                     <Col xs={12} md={6}>
                       <Form.Group id="ptype" className="mb-4">
                         <Form.Label>Assign Task To</Form.Label>
@@ -422,7 +454,15 @@ export default () => {
                       </Form.Group>
                     </Col>
                     <Col xs={12} md={6}>
-
+                    <Form.Label>Deadline</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={deadline}
+                        onChange={(e) => {
+                          setDeadline(e.target.value)
+                          // setvieweditfiledate(new Date(e.target.value).toISOString().split("T")[0])
+                        }}
+                      />
                     </Col>
                     {/* <Col xs={12} md={6}>
                       <Form.Group id="ptype" className="mb-4">
@@ -436,7 +476,7 @@ export default () => {
                       </Form.Group>
                     </Col> */}
 
-                    <Col className="d-flex justify-content-center"> {/* Centering the submit button */}
+                    <Col xs={12} md={6} className="d-flex justify-content-center"> {/* Centering the submit button */}
                       <Button variant="primary" type="submit" className="w-100 mt-3">
                         Submit
                       </Button>
@@ -464,3 +504,5 @@ export default () => {
     </>
   );
 };
+
+export default Comp

@@ -29,7 +29,7 @@ export default () => {
                       <InputGroup.Text>
                         <FontAwesomeIcon icon={faEnvelope} />
                       </InputGroup.Text>
-                      <Form.Control autoFocus required type="email" placeholder="example@company.com" />
+                      <Form.Control  required type="email" placeholder="example@company.com" />
                     </InputGroup>
                   </Form.Group>
                   <Form.Group id="password" className="mb-4">

@@ -1,9 +1,6 @@
 /*
 * = Buttons
 */
-#btn{
-    color:black
-}
 
 .btn {
     &.btn-circle {
@@ -18,7 +15,6 @@
         padding  : 0.175rem 0.45rem;
         font-size: 0.7rem;
     }
-    
 }
 
 .btn-icon-only {

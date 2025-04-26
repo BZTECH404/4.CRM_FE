@@ -287,14 +287,14 @@ export const PageVisitsTable = (props) => {
             </td>
             <td style={{ width: "2%", whiteSpace: "pre-wrap" }} onClick={() => handletaskhistory(data2)}>{getUsernameById([data2.assignedby])}</td>
             <td style={{ width: "10%" }}>
-              <Button style={{ backgroundColor: "black", color: "grey" }} variant="info" size="sm" onClick={() => handleEditModal(data2)}>
+              <Button style={{ backgroundColor: "black", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(data2)}>
                 <FontAwesomeIcon icon={faEdit} />
               </Button>
-              <Button onClick={() => handleaddtaskhistory(data2)} style={{ color: "grey", height: "40px" }}>Add</Button>
-              <Button style={{ color: "grey", height: "40px" }} onClick={() => handleComplete(data2._id, data2.taskCompleted)}>
+              <Button onClick={() => handleaddtaskhistory(data2)} style={{ color: "black", height: "40px" }}>Add</Button>
+              <Button style={{ color: "black", height: "40px" }} onClick={() => handleComplete(data2._id, data2.taskCompleted)}>
                 {data2.taskCompleted ? <>Mark incomplete</> : <>Mark complete</>}
               </Button>
-              <Button onClick={() => handleSaveChanges(data2)} style={{ color: "grey", height: "40px" }}>
+              <Button onClick={() => handleSaveChanges(data2)} style={{ color: "black", height: "40px" }}>
                 {checkinbuckets(data2._id) === false ? <p>Bucket</p> : <p>Already in Bucket</p>}
               </Button>
             </td>

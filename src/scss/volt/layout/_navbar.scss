@@ -457,6 +457,10 @@
 
         .collapse-close { 
             text-align: right;
+            color: white;
+            background-color: aqua;
+            border: 1px solid red($color: #000000);
+
         }
     }
 

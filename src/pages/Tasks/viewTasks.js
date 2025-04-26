@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { faHome, faQuran, faTrash, faAngleLeft, faAngleRight, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { baseurl, ProjectStatus, companies } from "../../api";
 import { triggerFunction, getPredefinedUrl } from '../../components/SignedUrl';
 import { useHistory } from 'react-router-dom';
-import { check } from '../../checkloggedin';
+import { check, checkpermission } from '../../checkloggedin';
 import Multiselect from "../../components/Multiselect";
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAsyncData } from '../../features/userslice'
@@ -19,15 +19,20 @@ import { addtaskhistory } from "../../features/taskhistoryslice";
 import AddTaskHistory from "../components/AddTaskHistory";
 import ViewTaskHistory from "../components/ViewTaskHistory";
 import { fetchProjects } from "../../features/projectslice";
+import CreateTasks from "./createTasks";
+import { ModalBody } from "react-bootstrap";
+import AddToBucket from "./addToBucket";
+import { setTrigger } from "../../features/bucketslice";
+import { dateinIndia, timeinIndia } from '../../checkloggedin'
 
-export default () => {
-  const [pname, setPname] = useState('');
-  const [people, setPeople] = useState('');
+const Comp = ({ ptbf, taskdetails, openhistorymodal, editmodal, addtobucket, fromdashboard }) => {
+  const [pname, setPname] = useState(ptbf ? ptbf : '');
+  const [people, setPeople] = useState(fromdashboard ? check()[0] : '');
   const [pnamearr, setPnamearr] = useState([]);
-  const [taskstatus, setTaskStatus] = useState('');
+  const [taskstatus, setTaskStatus] = useState(false);
   const [data, setData] = useState([]);
   const [users, setUsers] = useState([]);
-
+  const [temp, settemp] = useState(2)
 
   // for edit
   const [taskid, seteditTaskid] = useState("")
@@ -37,7 +42,10 @@ export default () => {
   const [edittaskSubject, setEdittaskSubject] = useState("")
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
+  const [showModal4, setShowModal4] = useState(false)
+  const [name, setName] = useState('')
+  const inputRef = React.useRef(null);
+  const [isDisabled, setisDisabled] = useState("false")
   // project filtering
   let [companyname, setCompanyName] = useState('')
   let [isActive, setIsActive] = useState(null)
@@ -46,37 +54,61 @@ export default () => {
   const [history, setHistory] = useState([])
   const [taskthis, settaskthis] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
-
+  let [project, setProject] = useState(null)
+  let [alltaskhistory, setalltaskhistory] = useState([])
   //view add History
   const [texthistory, setaddtexthistory] = useState("")
   const [showModal2, setShowModal2] = useState(false);
 
+  //Add tasks
+  const [showModal3, setShowModal3] = useState(false);
+  const [trigger, settrigger] = useState(false)
   //Created Option 
   let [createdoption, setCreatedoption] = useState(0)
+  const [editdeadline, seteditDeadline] = useState(null)
+
+
+
 
   // common for all
   const dispatch = useDispatch();
 
+  const todaystask = useSelector(state => state.bucket.today);
   // for users
   const { user1, loading, error } = useSelector((state) => state.users);
 
   useEffect(() => {
-    // ////////////////console.log(user)
-    (async () => {
-      const response = await axios.put(`${baseurl}/task/filter`, {
-        projectid: pname || undefined,
-        assignTaskTo: people ? [people] : undefined,
-        taskCompleted: taskstatus || undefined
-      });
-      setData(response.data);
-    })()
+    if (openhistorymodal && taskdetails && alltaskhistory && data && pnamearr) {
+      // Trigger the function if ohm exists
+      handletaskhistory({ _id: taskdetails?._id, projectid: ptbf })
+    }
+    if (editmodal && taskdetails && alltaskhistory && data && pnamearr) {
+      // Trigger the function if ohm exists
+      handleEditModal(taskdetails)
+    }
+
+    if (addtobucket && taskdetails && alltaskhistory && data && pnamearr) {
+      // Trigger the function if ohm exists
+      handleaddtobucket(taskdetails)
+    }
+  }, [alltaskhistory, pnamearr]);
+
+  useEffect(() => {
+    // Users
     dispatch(fetchAsyncData())
     if (user1.length != 0) {
-      // ////////////////console.log("once")
       setUsers(user1)
     }
+    // Project
     handleprojectFetch()
-  }, [user1.length]);
+    // Tasks
+    handleFetch()
+    // Task History
+    axios.get(`${baseurl}/history/`).then((res) => {
+      alltaskhistory = res.data
+      setalltaskhistory(res.data)
+    })
+  }, [user1.length, todaystask, trigger]);
 
 
 
@@ -102,11 +134,12 @@ export default () => {
   }
 
   const handleFetch = async (e) => {
-    e.preventDefault()
-
+    if (e) {
+      e.preventDefault()
+    }
     try {
       const response = await axios.put(`${baseurl}/task/filter`, {
-        projectid: pname || undefined,
+        projectid: pname || ptbf || undefined,
         assignTaskTo: people ? [people] : undefined,
         taskCompleted: taskstatus || undefined
       });
@@ -130,7 +163,6 @@ export default () => {
     }
     return str;
   };
-
 
   const handleComplete = (id) => {
     // Find the task with the given id and toggle its completion status locally
@@ -175,6 +207,7 @@ export default () => {
     setEdittaskSubject(item.taskSubject)
     setShowModal(true);
     setEditMode(true); // Set editMode to true when opening the edit modal
+    seteditDeadline(new Date(item.deadline).toISOString().split("T")[0])
   }
 
   const handleEditSubmit = async () => {
@@ -188,16 +221,18 @@ export default () => {
       assignTaskTo: temp,
       projectid: editprojectname,
       taskDescription: edittaskDescription,
-      taskSubject: edittaskSubject
+      taskSubject: edittaskSubject,
+      deadline: editdeadline
     };
-    //////////////////console.log(editData)
 
     try {
-      const response = await axios.put(`${baseurl}/task/${taskid}`, editData, {
+      await axios.put(`${baseurl}/task/${taskid}`, editData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
-      });
+      }).then(response => {
+        handleFetch()
+      })
       //////////////////console.log(response.data);
       toast.success("Task updated successfully");
       setShowModal(false);
@@ -214,73 +249,74 @@ export default () => {
   }
 
   const handletaskhistory = async (row) => {
-    //////////////////console.log("hi")
-    try {
-      // fetching all Histories of one task
-      let response = await axios.get(`${baseurl}/history/${row._id}`)
-      let temp = []
 
-      for (let i = 0; i < response.data.length; i++) {
-        let res = await axios.get(`${baseurl}/history/single/${(response.data)[i]._id}`)
-        temp.push(res.data)
-        //////////////////console.log(temp)
-      }
-      setHistory(temp)
-
-
-    } catch (error) {
-      //////////////////console.log(error)
-    }
-
-
+    seteditTaskid(row._id)
+    let temp = alltaskhistory.filter((history) => history.taskId === row._id)
+    setHistory(temp)
+    let proj = pnamearr.find((project) => project._id === ptbf)
+    setProject(proj)
     setShowModal1(true)
     settaskthis(true)
   }
 
   const handleaddhistory = async (row) => {
     // ////////////////console.log(row._id)
+    setProject(pnamearr.find((project) => project._id === row.projectid))
     seteditTaskid(row._id)
     setShowModal2(true)
     // dispatch(addtaskhistory("hi"))
 
   }
 
-
-
-
-
-  const handleTaskHistoryEditModal = () => {
-
+  const handleaddtobucket = async (row) => {
+    seteditTaskid(row._id)
+    setShowModal4(true)
 
   }
+
 
   const timeinIndia = (date) => {
     const utcTime = new Date(date);
     const istTime = utcTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
     return (istTime);
   }
-  const sortbycreatedby = () => {
-    let temp = createdoption + 1
-    setCreatedoption(temp)
-    //////console.log(temp)
-    if (temp == 3) {
 
-      setCreatedoption(1)
-      temp = 1
+  const AddtasktoUserBucket = async (e, taskid, uid) => {
+    if (e) {
+      e.preventDefault();
     }
 
-    let sortedData = []
-    for (let i = 0; i < data.length; i++) {
-      sortedData[i] = data[i]
+
+
+    // const userId = check()[0]; // Assuming this returns the userId
+
+    if (!taskid) {
+      toast.error("Please select a task");
+      return;
     }
-    //////console.log(sortedData)
-    if (temp == 1) {
-      sortedData.sort((a, b) => new Date(a.CreatedAt) - new Date(b.CreatedAt));
-      setData(sortedData)
-    }
-    if (temp == 2) {
-      sortedData = data.sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
-      setData(sortedData)
+
+    // Generate the current date
+    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    try {
+      // Send taskId as an array since the backend expects "tasks" to be an array
+      const response = await axios.post(`${baseurl}/bucket/buckets/${uid}`, {
+        date: currentDate,
+        tasks: [taskid],  // Send taskid as an array
+      });
+
+      if (response.status === 200) {
+        if (response.data.message === "Task added to existing bucket") {
+          toast.success("Task added to the existing bucket");
+        } else {
+          toast.success("New bucket created successfully");
+        }
+      } else {
+        toast.error("Failed to create or update the bucket");
+      }
+    } catch (error) {
+      console.error("Error creating/updating bucket:", error);
+      toast.error("Error creating or updating bucket");
     }
   }
 
@@ -329,6 +365,28 @@ export default () => {
             </Form.Group>
           </Col>
           <Col xs={12} md={4}>
+            <>
+              {/* <Form.Group id="taskstatus" className="mb-4"> */}
+              <Form.Label>Project Search</Form.Label>
+              <Form.Group controlId="editFileName">
+                <Form.Control
+                  ref={inputRef}
+                  type="text"
+                  placeholder="File Name or Date"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    setTimeout(() => {
+                      inputRef.current?.focus(); // Retains focus without autofocus
+                    }, 0);
+                  }
+                  }
+                />
+                {/* </InputGroup> */}
+              </Form.Group>
+            </>
+          </Col>
+          <Col xs={12} md={4}>
             <Form.Group id="pname" className="mb-4">
               <Form.Label>Project name</Form.Label>
               <InputGroup>
@@ -336,13 +394,19 @@ export default () => {
                 <Form.Select value={pname} onChange={(e) => setPname(e.target.value)}>
                   <option value="">Select Option</option>
                   pnamearr
-                  {pnamearr != undefined ? pnamearr.map((option, index) => (
+                  {pnamearr != undefined ? pnamearr.filter((project) =>
+                    (companyname === "" || project.company === companyname) &&
+                    // (regu === "" || project.regu === regu) &&
+                    // (isDisabled === "" || project.isDisabled === isDisabled)
+                    ((new RegExp(name, 'i')).test(project.name))
+                  ).map((option, index) => (
                     <option key={index} value={option._id}>{option.name}</option>
                   )) : null}
                 </Form.Select>
               </InputGroup>
             </Form.Group>
           </Col>
+
 
           <Col xs={12} md={4}>
             <Form.Group id="people" className="mb-4">
@@ -371,6 +435,20 @@ export default () => {
               </InputGroup>
             </Form.Group>
           </Col>
+          <Col xs={12} md={4}>
+            <Form.Group id="taskstatus" className="mb-4">
+              <Form.Label>Is Disabled</Form.Label>
+              <InputGroup>
+                <InputGroup.Text></InputGroup.Text>
+                <Form.Select value={isDisabled} onChange={(e) => setisDisabled(e.target.value)}>
+                  <option value="">Select Option</option>
+                  <option value="true">True</option>
+                  <option value="false">False</option>
+                </Form.Select>
+              </InputGroup>
+            </Form.Group>
+          </Col>
+
           <Col xs={12} md={2} className="d-flex justify-content-center">
             <Button style={{ height: "70%" }} variant="primary" type="submit" className="w-100 mt-3">
               Submit
@@ -382,27 +460,25 @@ export default () => {
         <Container>
           <Row>
             <Col className="mx-auto">
-              <Card style={{ width: 'max-content',marginLeft:'-5%' }} border="light" className="shadow-sm">
+              <Card style={{ width: 'max-content', marginLeft: '-5%' }} border="light" className="shadow-sm">
                 <Card.Header>
                   <Row style={{ width: "100%" }} className="align-items-center">
                     <Col>
-                      <h5>Service List</h5>
+                      <h5>Tasks List {ptbf ? `for ${pnamearr.find((i) => i._id === ptbf)?.name}` : ''}</h5>
                     </Col>
                     <Col style={{ width: "100%" }} className="text-end">
-                      <Button variant="secondary" size="sm">See all</Button>
+                      <Button onClick={(e) => setShowModal3(true)} variant="secondary" size="sm">Add Tasks</Button>
                     </Col>
                   </Row>
                 </Card.Header>
-                <Table responsive className="align-items-center table-flush">
+                <table responsive className="align-items-center table-flush">
                   <thead className="thead-light">
                     <tr>
-                      <th scope="col" className="unselectable" style={{ cursor: "pointer" }} onClick={sortbycreatedby}>Created At</th>
-
-
+                      <th scope="col" className="unselectable" style={{ cursor: "pointer" }} onClick={() => settemp(temp == 1 ? 2 : 1)}>Created At</th>
                       <th scope="col">Project Name</th>
-
                       <th scope="col">Task Subject</th>
                       <th scope="col">Task Description</th>
+                      <th scope="col">Deadline</th>
                       <th scope="col">Assigned to</th>
                       <th scope="col">Actions</th>
                     </tr>
@@ -413,39 +489,76 @@ export default () => {
                         <td colSpan="6" className="text-center">loading...</td>
                       </tr>
                     ) : (
-                      data.map((row, index) => {
-                        const projectName = findprojectname(row.projectid);
-                        return projectName ? (
-                          <tr key={index}>
-                            <td style={{ whiteSpace: "pre-wrap" }}>{timeinIndia(row.CreatedAt)}</td>
+                      data.filter((task) =>
+                        (taskstatus === "" || task?.taskCompleted === (taskstatus === "true")) &&
+                        (isDisabled === "" || task?.isDisabled === (isDisabled === "true"))
 
-                            <td style={{ cursor: "pointer",whiteSpace: "pre-wrap"}} onClick={() => handletaskhistory(row)}><p><span style={{ position: "relative", top: "15px", border: "4px solid cyan", borderRadius: "200px", fontWeight: "700" }}>{row.nooftask}</span>{projectName}</p></td>
-                            <td style={{ whiteSpace: "pre-wrap",maxWidth:'30px'}}>{row.taskSubject}</td>
-                            <td style={{ whiteSpace: "pre-wrap",maxWidth:'30px' }}><pre style={{ whiteSpace: "pre-wrap" }}>{row.taskDescription}</pre></td>
-                            <td style={{ whiteSpace: "pre-wrap" }}>{getUsernameById(row.assignTaskTo)}</td>
-                            <td>
-                              <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
-                                <FontAwesomeIcon icon={faEdit} />
-                              </Button>
-                              <Button style={{ borderColor: "black", backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => dispatch(deletetasks(row._id))} variant="danger" size="sm">
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                              <Button style={{ backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => handleaddhistory(row)}>Add</Button>
-                              <Button
-                                style={{ backgroundColor: "aqua", color: "black", marginLeft: "2%" }}
-                                onClick={() => handleComplete(row._id)}
-                              >
-                                {row.taskCompleted ? "Mark incomplete" : "Mark complete"}
-                              </Button>
 
-                            </td>
-                          </tr>
-                        ) : null;
-                      })
+
+                      )
+                        .sort((a, b) => {
+                          if (temp == 1) {
+                            return new Date(a.CreatedAt) - new Date(b.CreatedAt); // Ascending order
+                          } else if (temp == 2) {
+                            return new Date(b.CreatedAt) - new Date(a.CreatedAt); // Descending order
+                          }
+                          return 0;
+                        }).map((row, index) => {
+                          const projectName = findprojectname(row.projectid);
+                          return projectName ? (
+                            <tr key={index}>
+                              <td style={{ whiteSpace: "pre-wrap" }}>{timeinIndia(row.CreatedAt)}</td>
+
+                              <td style={{ textAlign: "left", maxWidth: '20px', cursor: "pointer", whiteSpace: "pre-wrap" }} onClick={() => handletaskhistory(row)}>
+                                <p >{projectName}</p>
+                                <span style={{ position: "relative", top: "-10px", border: "4px solid cyan", borderRadius: "200px", fontWeight: "700" }}>{row.nooftask}</span>
+                              </td>
+                              <td style={{ whiteSpace: "pre-wrap", maxWidth: '30px' }}>{row.taskSubject}</td>
+                              <td style={{ whiteSpace: "pre-wrap", width: "250px", fontSize: "18px" }}><pre style={{ whiteSpace: "pre-wrap" }}>{row.taskDescription}</pre></td>
+                              <td style={{ whiteSpace: "pre-wrap", width: "250px", fontSize: "18px" }}><pre style={{ whiteSpace: "pre-wrap" }}>{dateinIndia(row.deadline)}</pre></td>
+
+                              <td style={{ whiteSpace: "pre-wrap" }}>{getUsernameById(row.assignTaskTo)}</td>
+                              <td style={{ height: "100%", border: "0px solid green", width: "max-content", display: "flex", flexDirection: "column" }}>
+                                <Button style={{ backgroundColor: "aqua", color: "black" }} variant="info" size="sm" onClick={() => handleEditModal(row)}>
+                                  <FontAwesomeIcon icon={faEdit} />
+                                </Button>
+                                {checkpermission() && (<Button style={{ backgroundColor: "aqua", borderColor: "black", color: "black", marginLeft: "2%" }} onClick={(e) => {
+                                  dispatch(deletetasks(row._id)).then((res) => {
+                                    handleFetch(e);
+                                  })
+                                }} variant="danger" size="sm">
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </Button>)}
+                                <Button style={{ backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => handleaddhistory(row)}>
+                                  Add
+                                </Button>
+                                {!fromdashboard ? (
+                                  <Button style={{ backgroundColor: "aqua", color: "black", marginLeft: "2%" }} onClick={() => handleaddtobucket(row)}>
+                                    Add to Bucket
+                                  </Button>
+                                ) : (<Button style={{ backgroundColor: todaystask.some(task => task._id == row._id) ? 'red' : 'cyan', color: "black", marginLeft: "2%" }} onClick={(e) => {
+                                  AddtasktoUserBucket(e, row._id, check()[0]).then((res) => {
+                                    dispatch(setTrigger());
+                                  })
+                                }}>
+                                  {todaystask?.some(task => task._id == row._id) ? "Already in bucket" : "Add to Bucket"}
+                                </Button>)}
+
+                                <Button
+                                  style={{ backgroundColor: "aqua", color: "black", marginLeft: "2%" }}
+                                  onClick={() => handleComplete(row._id)}
+                                >
+                                  {row.taskCompleted ? "Mark incomplete" : "Mark complete"}
+                                </Button>
+
+                              </td>
+                            </tr>
+                          ) : null;
+                        })
                     )}
 
                   </tbody>
-                </Table>
+                </table>
               </Card>
             </Col>
           </Row>
@@ -457,24 +570,33 @@ export default () => {
           <Modal.Title>Edit Tasks</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <Form.Label>Deadline</Form.Label>
+          <Form.Control
+            type="date"
+            value={editdeadline}
+            onChange={(e) => {
+              seteditDeadline(e.target.value)
+              // setvieweditfiledate(new Date(e.target.value).toISOString().split("T")[0])
+            }}
+          />
+          <Form.Group className="mb-3" controlId="editDescription">
+            <Form.Label>Project name</Form.Label>
+            <Form.Select required value={editprojectname} onChange={(e) => setEditprojectname(e.target.value)}>
+              <option value="">Select Option</option>
 
-          {/* <Form.Group className="mb-3" controlId="editDescription">
-                              <Form.Label>Project name</Form.Label>
-                    <Form.Select required value={editprojectname} onChange={(e) => setEditprojectname(e.target.value)}>
-                          <option value="">Select Option</option>
-                           
-                            {pnamearr.map((option, index) => (
-                              <option key={index} value={option._id}>{option.name}</option>
-                            ))}
-                          </Form.Select>
-                          </Form.Group> */}
-          <Form.Group className="mb-3" controlId="editHeading">
-            <Form.Label>Task Description</Form.Label>
-            <textarea rows="4" cols="50" type="text" value={edittaskDescription} onChange={(e) => setEdittaskDescription(e.target.value)} />
+              {pnamearr.map((option, index) => (
+                <option key={index} value={option._id}>{option.name}</option>
+              ))}
+            </Form.Select>
           </Form.Group>
+
           <Form.Group className="mb-3" controlId="editHeading">
             <Form.Label>Task Subject</Form.Label>
             <Form.Control type="text" value={edittaskSubject} onChange={(e) => setEdittaskSubject(e.target.value)} />
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="editHeading">
+            <Form.Label>Task Description</Form.Label>
+            <textarea rows="4" cols="50" type="text" value={edittaskDescription} onChange={(e) => setEdittaskDescription(e.target.value)} />
           </Form.Group>
 
           {/* People */}
@@ -498,14 +620,36 @@ export default () => {
       </Modal>
 
 
-      <ViewTaskHistory history={history} showModal1={showModal1} setShowModal1={setShowModal1} />
+      <ViewTaskHistory handleFetch={handleFetch} project={project} taskid={taskid} history={history} setHistory={setHistory} showModal1={showModal1} setShowModal1={setShowModal1} getUsernameById={getUsernameById} settrigger={settrigger} trigger={trigger} />
       {/* add history */}
 
-      <AddTaskHistory taskid={taskid} showModal2={showModal2} setShowModal2={setShowModal2} />
+      <AddTaskHistory handleFetch={handleFetch} project={project} taskid={taskid} showModal2={showModal2} setShowModal2={setShowModal2} settrigger={settrigger} trigger={trigger} />
+
+      <Modal show={showModal3} onHide={() => {
+        setShowModal3(false)
+      }}>
+        <ModalBody>
+          <CreateTasks handleFetch={handleFetch} ptbf={ptbf ? ptbf : ""} />
+        </ModalBody>
+      </Modal>
+
+      <Modal show={showModal4} onHide={() => {
+        setShowModal4(false)
+      }}>
+        <Modal.Header>
+          <Modal.Title>Add to Bucket</Modal.Title>
+        </Modal.Header>
+        <ModalBody>
+          <AddToBucket users={users} taskid={taskid} />
+        </ModalBody>
+
+      </Modal>
+
+
 
 
     </>
   );
 }
 
-
+export default Comp
